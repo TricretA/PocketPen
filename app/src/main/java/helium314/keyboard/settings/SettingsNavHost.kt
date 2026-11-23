@@ -18,6 +18,8 @@ import helium314.keyboard.latin.settings.SettingsSubtype.Companion.toSettingsSub
 import helium314.keyboard.latin.settings.getTransitionAnimationScale
 import helium314.keyboard.settings.screens.AboutScreen
 import helium314.keyboard.settings.screens.AiScreen
+import helium314.keyboard.settings.screens.ClipboardManagerScreen
+import helium314.keyboard.settings.screens.VoiceScreen
 import helium314.keyboard.settings.screens.AdvancedSettingsScreen
 import helium314.keyboard.settings.screens.AppearanceScreen
 import helium314.keyboard.settings.screens.ColorsScreen
@@ -80,8 +82,16 @@ fun SettingsNavHost(
                 onClickLayouts = { navController.navigate(SettingsDestination.Layouts) },
                 onClickDictionaries = { navController.navigate(SettingsDestination.Dictionaries) },
                 onClickAi = { navController.navigate(SettingsDestination.Ai) },
+                onClickVoice = { navController.navigate(SettingsDestination.Voice) },
+                onClickClipboard = { navController.navigate(SettingsDestination.ClipboardManager) },
                 onClickBack = ::goBack,
             )
+        }
+        composable(SettingsDestination.ClipboardManager) {
+            ClipboardManagerScreen(onClickBack = ::goBack)
+        }
+        composable(SettingsDestination.Voice) {
+            VoiceScreen(onClickBack = ::goBack)
         }
         composable(SettingsDestination.Ai) {
             AiScreen(onClickBack = ::goBack)
@@ -153,6 +163,8 @@ object SettingsDestination {
     const val Settings = "settings"
     const val About = "about"
     const val Ai = "ai"
+    const val Voice = "voice"
+    const val ClipboardManager = "clipboard_manager"
     const val TextCorrection = "text_correction"
     const val Preferences = "preferences"
     const val Toolbar = "toolbar"

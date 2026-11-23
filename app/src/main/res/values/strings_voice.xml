@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_screen_voice">Voice typing</string>
+    <string name="voice_title">Voice typing</string>
+    <string name="voice_engine">Voice engine</string>
+    <string name="voice_engine_device">Device voice input</string>
+    <string name="voice_engine_groq">Groq Whisper</string>
+    <string name="voice_engine_groq_hint">Groq Whisper, switches to device voice input when offline</string>
+    <string name="voice_model">Whisper model</string>
+    <string name="voice_model_turbo">Turbo, fastest</string>
+    <string name="voice_model_accurate">Large v3, most accurate</string>
+    <string name="voice_language">Spoken language</string>
+    <string name="voice_language_auto">Automatic</string>
+    <string name="voice_language_hint">Language code such as en or sw, empty for automatic</string>
+    <string name="voice_vocabulary">Vocabulary hint</string>
+    <string name="voice_vocabulary_hint">Names and words to spell correctly, for example M-Pesa, Safaricom</string>
+    <string name="voice_vocabulary_empty">Not set</string>
+    <string name="voice_ai_cleanup">Clean up transcript with AI</string>
+    <string name="voice_ai_cleanup_on">On, fixes grammar and punctuation using your AI assistant provider</string>
+    <string name="voice_ai_cleanup_off">Off</string>
+    <string name="voice_microphone">Microphone permission</string>
+    <string name="voice_microphone_granted">Allowed</string>
+    <string name="voice_microphone_missing">Not allowed yet, tap to allow</string>
+    <string name="voice_groq_key_note">Groq Whisper uses the Groq API key from AI assistant settings. Audio is sent to Groq only while you use the mic key, and deleted from the phone right after.</string>
+    <string name="voice_recording">Listening…</string>
+    <string name="voice_transcribing">Transcribing…</string>
+    <string name="voice_review">Review, then insert</string>
+    <string name="voice_stop">Stop</string>
+    <string name="voice_insert">Insert</string>
+    <string name="voice_cleanup">Clean up with AI</string>
+    <string name="voice_again">Record again</string>
+    <string name="voice_use_device">Use device voice input</string>
+    <string name="voice_too_short">Recording was too short</string>
+    <string name="voice_error_start">Could not start recording: %1$s</string>
+    <string name="voice_error_password">Voice typing is disabled in password fields</string>
+    <string name="voice_offline_using_device">Offline, using device voice input</string>
+    <string name="voice_no_key_using_device">No Groq key set, using device voice input. Add it in Settings, AI assistant.</string>
+    <string name="voice_permission_needed">Allow the microphone, then tap the mic key again</string>
+    <string name="voice_permission_granted">Microphone allowed</string>
+    <string name="voice_permission_denied">Microphone permission denied</string>
+</resources>

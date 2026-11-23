@@ -188,6 +188,27 @@ class ClipboardDao private constructor(private val db: Database) {
 
     fun count() = shown.size
 
+    fun updateText(id: Long, text: String) = synchronized(this) {
+        val entry = cache.firstOrNull { it.id == id } ?: return@synchronized
+        if (entry.filename != null || text.isBlank()) return@synchronized
+        entry.text = text
+        val cv = ContentValues(1)
+        cv.put(COLUMN_TEXT, text)
+        db.writableDatabase.update(TABLE, cv, "$COLUMN_ID = $id", null)
+        listener?.onClipsChanged()
+    }
+
+    fun remove(id: Long) = synchronized(this) {
+        val entry = cache.firstOrNull { it.id == id } ?: return@synchronized
+        delete(listOf(entry))
+        listener?.onClipsChanged()
+    }
+
+    fun addSnippet(text: String) {
+        if (text.isBlank()) return
+        insertNewEntry(System.currentTimeMillis(), true, text, null, null, null, true)
+    }
+
     fun sort() {
         cache.sort()
         refreshShown()

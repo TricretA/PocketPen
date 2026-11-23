@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_screen_clipboard">Clipboard manager</string>
+    <string name="clipboard_manager_search">Search</string>
+    <string name="clipboard_manager_add_snippet">Add snippet</string>
+    <string name="clipboard_manager_edit">Edit</string>
+    <string name="clipboard_manager_delete">Delete</string>
+    <string name="clipboard_manager_empty">Nothing here yet</string>
+    <string name="clipboard_manager_file">Image or file</string>
+    <string name="clipboard_manager_kind_snippet">Snippet</string>
+    <string name="clipboard_manager_kind_pinned">Pinned</string>
+    <string name="clipboard_manager_kind_recent">Recent</string>
+    <string name="clipboard_manager_pin_cycle">Pin or save as snippet</string>
+    <string name="clipboard_manager_retention">Keep history for</string>
+    <string name="clipboard_manager_retention_custom">Custom, in days</string>
+    <string name="clipboard_manager_retention_days">%1$d days</string>
+    <string name="clipboard_manager_retention_hours">%1$d hours</string>
+    <string name="clipboard_manager_retention_minutes">%1$d minutes</string>
+</resources>

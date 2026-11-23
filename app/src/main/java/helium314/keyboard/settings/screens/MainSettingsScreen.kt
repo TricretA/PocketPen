@@ -43,6 +43,8 @@ fun MainSettingsScreen(
     onClickLayouts: () -> Unit,
     onClickDictionaries: () -> Unit,
     onClickAi: () -> Unit,
+    onClickVoice: () -> Unit,
+    onClickClipboard: () -> Unit,
     onClickBack: () -> Unit,
 ) {
     SearchSettingsScreen(
@@ -110,6 +112,16 @@ fun MainSettingsScreen(
                     icon = R.drawable.ic_ai
                 ) { NextScreenIcon() }
                 Preference(
+                    name = stringResource(R.string.settings_screen_clipboard),
+                    onClick = onClickClipboard,
+                    icon = R.drawable.sym_keyboard_clipboard_lxx
+                ) { NextScreenIcon() }
+                Preference(
+                    name = stringResource(R.string.settings_screen_voice),
+                    onClick = onClickVoice,
+                    icon = R.drawable.sym_keyboard_voice_lxx
+                ) { NextScreenIcon() }
+                Preference(
                     name = stringResource(R.string.settings_screen_advanced),
                     onClick = onClickAdvanced,
                     icon = R.drawable.ic_settings_advanced
@@ -130,7 +142,7 @@ private fun PreviewScreen() {
     initPreview(LocalContext.current)
     Theme(previewDark) {
         Surface {
-            MainSettingsScreen({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
+            MainSettingsScreen({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
         }
     }
 }

@@ -9,7 +9,9 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 
-class AiException(message: String) : Exception(message)
+open class AiException(message: String) : Exception(message)
+
+class AiNetworkException(message: String) : AiException(message)
 
 object AiClient {
     private const val ANTHROPIC_VERSION = "2023-06-01"
@@ -108,7 +110,7 @@ object AiClient {
         } catch (e: AiException) {
             throw e
         } catch (e: IOException) {
-            throw AiException("Network error: ${e.message ?: e.javaClass.simpleName}")
+            throw AiNetworkException("Network error: ${e.message ?: e.javaClass.simpleName}")
         } catch (e: JSONException) {
             throw AiException("Unexpected response from ${provider.label}")
         } finally {

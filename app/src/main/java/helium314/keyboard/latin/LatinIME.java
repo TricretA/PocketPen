@@ -65,6 +65,7 @@ import helium314.keyboard.latin.utils.GestureDataGatheringKt;
 import helium314.keyboard.latin.utils.GestureDataGatheringSettings;
 import helium314.keyboard.latin.utils.InlineAutofillUtils;
 import helium314.keyboard.ai.AiPanelKt;
+import helium314.keyboard.voice.VoiceLauncher;
 import helium314.keyboard.latin.utils.InputMethodPickerKt;
 import helium314.keyboard.latin.utils.JniUtils;
 import helium314.keyboard.latin.utils.KtxKt;
@@ -1198,6 +1199,16 @@ public class LatinIME extends InputMethodService implements
         return false;
     }
 
+    public void showOptionsDialog(final AlertDialog dialog) {
+        if (isShowingOptionDialog()) return;
+        mOptionsDialog = dialog;
+        dialog.show();
+    }
+
+    public void switchToDeviceVoiceInput() {
+        mRichImm.switchToShortcutIme(this);
+    }
+
     public void showAiPanel() {
         if (isShowingOptionDialog()) return;
         final View keyboardView = mKeyboardSwitcher.getMainKeyboardView();
@@ -1254,7 +1265,7 @@ public class LatinIME extends InputMethodService implements
     // This method is public for testability of LatinIME, but also in the future it should
     // completely replace #onCodeInput.
     public void onEvent(@NonNull final Event event) {
-        if (KeyCode.VOICE_INPUT == event.getKeyCode()) {
+        if (KeyCode.VOICE_INPUT == event.getKeyCode() && !VoiceLauncher.handle(this)) {
             mRichImm.switchToShortcutIme(this);
         }
         InputTransaction completeInputTransaction =
