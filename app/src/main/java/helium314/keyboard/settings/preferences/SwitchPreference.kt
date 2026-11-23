@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package helium314.keyboard.settings.preferences
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -75,6 +76,14 @@ fun SwitchPreference(
         Switch(
             checked = value,
             onCheckedChange = { switched(it) },
+            colors = androidx.compose.material3.SwitchDefaults.colors(
+                checkedTrackColor = helium314.keyboard.latin.utils.PP.Signal,
+                checkedThumbColor = helium314.keyboard.latin.utils.PP.Ink,
+                checkedBorderColor = androidx.compose.ui.graphics.Color.Transparent,
+                uncheckedTrackColor = MaterialTheme.colorScheme.outlineVariant,
+                uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                uncheckedBorderColor = androidx.compose.ui.graphics.Color.Transparent,
+            )
         )
     }
 }

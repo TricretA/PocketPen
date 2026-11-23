@@ -10,7 +10,7 @@
     <color name="keyboard_background">@color/keyboard_background_dark</color>
 
     <!-- Color resources for setup wizard, tutorial and settings -->
-    <color name="accent">@color/highlight_color_lxx_dark</color>
+    <color name="accent">#F04A0C</color>
     <color name="setup_background">#FF303030</color>
     <color name="setup_step_background">#FF2D4260</color>
     <color name="setup_text_title">#FF5C94F1</color>

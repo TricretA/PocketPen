@@ -42,10 +42,10 @@ fun PreferenceCategory(
     Column {
         HorizontalDivider()
         Text(
-            text = title,
-            modifier = modifier.padding(top = 12.dp, start = 16.dp, end = 8.dp, bottom = 8.dp),
-            color = MaterialTheme.colorScheme.secondary,
-            style = MaterialTheme.typography.titleSmall
+            text = title.uppercase(),
+            modifier = modifier.padding(top = 18.dp, start = 20.dp, end = 8.dp, bottom = 8.dp),
+            color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.labelMedium
         )
     }
 }
@@ -63,23 +63,25 @@ fun Preference(
         modifier = modifier
             .fillMaxWidth()
             .clickable { onClick() }
-            .heightIn(min = 44.dp)
-            .padding(vertical = 10.dp, horizontal = 12.dp),
+            .heightIn(min = 64.dp)
+            .padding(vertical = 12.dp, horizontal = 20.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (icon != null)
             IconOrImage(icon, name, 32)
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = name, style = MaterialTheme.typography.bodyLarge)
+            Text(text = name, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
             if (description != null) {
                 CompositionLocalProvider(
-                    LocalTextStyle provides MaterialTheme.typography.bodyMedium,
+                    LocalTextStyle provides MaterialTheme.typography.bodySmall,
                     LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant
                 ) {
                     Text(
                         text = description,
-                        modifier = Modifier.padding(top = 2.dp)
+                        modifier = Modifier.padding(top = 2.dp),
+                        maxLines = 2,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                     )
                 }
             }

@@ -1,6 +1,24 @@
 package helium314.keyboard.settings.screens
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import helium314.keyboard.latin.utils.PP
+import helium314.keyboard.settings.ui.KeyCap
+import helium314.keyboard.settings.ui.PillRow
+import helium314.keyboard.settings.ui.PocketFrame
+import helium314.keyboard.settings.ui.ValueTile
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -77,81 +95,88 @@ fun ClipboardManagerScreen(onClickBack: () -> Unit) {
             .filter { query.isBlank() || it.text?.contains(query.trim(), ignoreCase = true) == true }
     }
 
-    SearchSettingsScreen(
-        onClickBack = onClickBack,
-        title = stringResource(R.string.settings_screen_clipboard),
-        settings = emptyList(),
-    ) {
-        Scaffold(contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)) { innerPadding ->
-            Column(Modifier.padding(innerPadding)) {
-                Preference(
-                    name = stringResource(R.string.clipboard_manager_retention),
-                    description = retentionLabel(retention),
-                    onClick = { dialog = ClipDialog.Retention }
+    PocketFrame(stringResource(R.string.pp_clipboard), onClickBack) {
+        Column(Modifier.weight(1f).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                ValueTile(
+                    stringResource(R.string.pp_retention),
+                    retentionLabel(retention),
+                    R.drawable.ic_pp_clock,
+                    { dialog = ClipDialog.Retention },
+                    Modifier.weight(1f)
                 )
-                Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    OutlinedTextField(
-                        value = query,
-                        onValueChange = { query = it },
-                        singleLine = true,
-                        label = { Text(stringResource(R.string.clipboard_manager_search)) },
-                        modifier = Modifier.weight(1f)
+                KeyCap(onClick = { dialog = ClipDialog.Add }, modifier = Modifier.size(88.dp), color = PP.Signal, lip = Color(0xFFB93405), corner = 24.dp) {
+                    Icon(
+                        Icons.Filled.Add,
+                        contentDescription = stringResource(R.string.pp_snippet),
+                        tint = PP.Ink,
+                        modifier = Modifier.align(Alignment.Center).size(34.dp)
                     )
-                    TextButton(onClick = { dialog = ClipDialog.Add }) { Text(stringResource(R.string.clipboard_manager_add_snippet)) }
                 }
-                Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                    listOf(
-                        ClipboardDao.Tab.ALL to R.string.clipboard_tab_all,
-                        ClipboardDao.Tab.RECENT to R.string.clipboard_tab_recent,
-                        ClipboardDao.Tab.PINNED to R.string.clipboard_tab_pinned,
-                        ClipboardDao.Tab.SNIPPETS to R.string.clipboard_tab_snippets,
-                    ).forEach { (entryTab, label) ->
-                        TextButton(onClick = { tab = entryTab }) {
-                            Text(
-                                stringResource(label),
-                                color = if (tab == entryTab) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                }
-                HorizontalDivider()
-                if (entries.isEmpty()) {
-                    Text(stringResource(R.string.clipboard_manager_empty), Modifier.padding(16.dp))
-                }
-                LazyColumn(Modifier.weight(1f)) {
-                    items(entries, key = { it.id }) { entry ->
-                        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-                            Text(
-                                text = entry.text ?: stringResource(R.string.clipboard_manager_file),
-                                maxLines = 3,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = stringResource(
-                                        when {
-                                            entry.isSnippet -> R.string.clipboard_manager_kind_snippet
-                                            entry.isPinned -> R.string.clipboard_manager_kind_pinned
-                                            else -> R.string.clipboard_manager_kind_recent
-                                        }
-                                    ),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.secondary,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                TextButton(onClick = {
-                                    dao?.cycleKind(entry.id)
-                                    version++
-                                }) { Text(stringResource(R.string.clipboard_manager_pin_cycle)) }
-                                if (entry.filename == null) TextButton(onClick = { dialog = ClipDialog.Edit(entry) }) {
-                                    Text(stringResource(R.string.clipboard_manager_edit))
+            }
+            OutlinedTextField(
+                value = query,
+                onValueChange = { query = it },
+                singleLine = true,
+                placeholder = { Text(stringResource(R.string.pp_search)) },
+                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                shape = RoundedCornerShape(28.dp),
+                modifier = Modifier.fillMaxWidth()
+            )
+            PillRow(
+                options = listOf(
+                    stringResource(R.string.clipboard_tab_all) to ClipboardDao.Tab.ALL,
+                    stringResource(R.string.clipboard_tab_recent) to ClipboardDao.Tab.RECENT,
+                    stringResource(R.string.clipboard_tab_pinned) to ClipboardDao.Tab.PINNED,
+                    stringResource(R.string.clipboard_tab_snippets) to ClipboardDao.Tab.SNIPPETS,
+                ),
+                selected = tab,
+                onSelect = { tab = it }
+            )
+            if (entries.isEmpty()) {
+                Text(stringResource(R.string.pp_empty), color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(8.dp))
+            }
+            LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                items(entries, key = { it.id }) { entry ->
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(22.dp))
+                            .background(MaterialTheme.colorScheme.surfaceContainer)
+                            .padding(start = 16.dp, top = 8.dp, bottom = 8.dp, end = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            painterResource(
+                                when {
+                                    entry.isSnippet -> R.drawable.ic_pp_snippet
+                                    entry.isPinned -> R.drawable.ic_pp_pin
+                                    else -> R.drawable.ic_pp_clock
                                 }
-                                TextButton(onClick = { dialog = ClipDialog.Delete(entry) }) {
-                                    Text(stringResource(R.string.clipboard_manager_delete))
-                                }
-                            }
+                            ),
+                            contentDescription = null,
+                            tint = if (entry.isPinned || entry.isSnippet) PP.Signal else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Text(
+                            text = entry.text ?: stringResource(R.string.clipboard_manager_file),
+                            maxLines = 3,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.weight(1f).padding(horizontal = 12.dp)
+                        )
+                        IconButton(onClick = {
+                            dao?.cycleKind(entry.id)
+                            version++
+                        }) {
+                            Icon(painterResource(R.drawable.ic_pp_pin), contentDescription = stringResource(R.string.pp_pin), modifier = Modifier.size(22.dp))
                         }
-                        HorizontalDivider()
+                        if (entry.filename == null) IconButton(onClick = { dialog = ClipDialog.Edit(entry) }) {
+                            Icon(Icons.Filled.Edit, contentDescription = stringResource(R.string.pp_edit), modifier = Modifier.size(22.dp))
+                        }
+                        IconButton(onClick = { dialog = ClipDialog.Delete(entry) }) {
+                            Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.pp_delete), modifier = Modifier.size(22.dp))
+                        }
                     }
                 }
             }

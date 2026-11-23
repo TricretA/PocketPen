@@ -29,7 +29,10 @@ import helium314.keyboard.settings.screens.DebugScreen
 import helium314.keyboard.settings.screens.DictionaryScreen
 import helium314.keyboard.settings.screens.GestureTypingScreen
 import helium314.keyboard.settings.screens.LanguageScreen
-import helium314.keyboard.settings.screens.MainSettingsScreen
+import helium314.keyboard.settings.screens.HomeScreen
+import helium314.keyboard.settings.screens.LookScreen
+import helium314.keyboard.settings.screens.MoreScreen
+import helium314.keyboard.settings.screens.TypingScreen
 import helium314.keyboard.settings.screens.PersonalDictionariesScreen
 import helium314.keyboard.settings.screens.PersonalDictionaryScreen
 import helium314.keyboard.settings.screens.PreferencesScreen
@@ -71,24 +74,16 @@ fun SettingsNavHost(
         popExitTransition = { slideOutHorizontally(targetOffsetX = { +it * dir }, animationSpec = animation) }
     ) {
         composable(SettingsDestination.Settings) {
-            MainSettingsScreen(
-                onClickAbout = { navController.navigate(SettingsDestination.About) },
-                onClickTextCorrection = { navController.navigate(SettingsDestination.TextCorrection) },
-                onClickPreferences = { navController.navigate(SettingsDestination.Preferences) },
-                onClickToolbar = { navController.navigate(SettingsDestination.Toolbar) },
-                onClickGestureTyping = { navController.navigate(SettingsDestination.GestureTyping) },
-                onClickDataGathering = { navController.navigate(SettingsDestination.DataGathering) },
-                onClickAdvanced = { navController.navigate(SettingsDestination.Advanced) },
-                onClickAppearance = { navController.navigate(SettingsDestination.Appearance) },
-                onClickLanguage = { navController.navigate(SettingsDestination.Languages) },
-                onClickLayouts = { navController.navigate(SettingsDestination.Layouts) },
-                onClickDictionaries = { navController.navigate(SettingsDestination.Dictionaries) },
-                onClickAi = { navController.navigate(SettingsDestination.Ai) },
-                onClickVoice = { navController.navigate(SettingsDestination.Voice) },
-                onClickClipboard = { navController.navigate(SettingsDestination.ClipboardManager) },
-                onClickHandwriting = { navController.navigate(SettingsDestination.Handwriting) },
-                onClickBack = ::goBack,
-            )
+            HomeScreen(onNavigate = { navController.navigate(it) }, onClickBack = ::goBack)
+        }
+        composable(SettingsDestination.Look) {
+            LookScreen(onNavigate = { navController.navigate(it) }, onClickBack = ::goBack)
+        }
+        composable(SettingsDestination.Typing) {
+            TypingScreen(onClickBack = ::goBack)
+        }
+        composable(SettingsDestination.More) {
+            MoreScreen(onNavigate = { navController.navigate(it) }, onClickBack = ::goBack)
         }
         composable(SettingsDestination.ClipboardManager) {
             ClipboardManagerScreen(onClickBack = ::goBack)
@@ -173,6 +168,9 @@ object SettingsDestination {
     const val About = "about"
     const val Ai = "ai"
     const val Voice = "voice"
+    const val Look = "look"
+    const val Typing = "typing"
+    const val More = "more"
     const val Handwriting = "handwriting"
     const val ClipboardManager = "clipboard_manager"
     const val TextCorrection = "text_correction"

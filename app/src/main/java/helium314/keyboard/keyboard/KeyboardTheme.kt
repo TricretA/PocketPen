@@ -49,6 +49,9 @@ private constructor(val themeId: Int, @JvmField val mStyleId: Int) {
         const val STYLE_ROUNDED = "Rounded"
 
         // new themes that are just colors
+        const val THEME_PAPER = "paper"
+        const val THEME_INK = "ink"
+        const val THEME_SIGNAL = "signal"
         const val THEME_LIGHT = "light"
         const val THEME_HOLO_WHITE = "holo_white"
         const val THEME_DARK = "dark"
@@ -66,6 +69,7 @@ private constructor(val themeId: Int, @JvmField val mStyleId: Int) {
         const val THEME_SAND = "sand"
         const val THEME_VIOLETTE = "violette"
         fun getAvailableDefaultColors(prefs: SharedPreferences, isNight: Boolean) = listOfNotNull(
+            THEME_PAPER, THEME_INK, THEME_SIGNAL,
             if (!isNight) THEME_LIGHT else null, THEME_DARK,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) THEME_DYNAMIC else null,
             if (prefs.getString(Settings.PREF_THEME_STYLE, Defaults.PREF_THEME_STYLE) == STYLE_HOLO) THEME_HOLO_WHITE else null,
@@ -152,6 +156,42 @@ private constructor(val themeId: Int, @JvmField val mStyleId: Int) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) DynamicColors(context, themeStyle, hasBorders, backgroundImage)
                     else getThemeColors(THEME_LIGHT, themeStyle, context, prefs, isNight)
                 }
+                THEME_PAPER -> DefaultColors(
+                    themeStyle,
+                    hasBorders,
+                    Color.rgb(240, 74, 12),
+                    Color.rgb(247, 244, 237),
+                    Color.WHITE,
+                    Color.rgb(227, 223, 213),
+                    Color.WHITE,
+                    Color.rgb(18, 20, 27),
+                    Color.rgb(59, 64, 76),
+                    keyboardBackground = backgroundImage
+                )
+                THEME_INK -> DefaultColors(
+                    themeStyle,
+                    hasBorders,
+                    Color.rgb(240, 74, 12),
+                    Color.rgb(18, 20, 27),
+                    Color.rgb(38, 42, 54),
+                    Color.rgb(28, 31, 41),
+                    Color.rgb(38, 42, 54),
+                    Color.rgb(247, 244, 237),
+                    Color.rgb(154, 160, 174),
+                    keyboardBackground = backgroundImage
+                )
+                THEME_SIGNAL -> DefaultColors(
+                    themeStyle,
+                    hasBorders,
+                    Color.rgb(18, 20, 27),
+                    Color.rgb(240, 74, 12),
+                    Color.rgb(247, 244, 237),
+                    Color.rgb(255, 206, 186),
+                    Color.rgb(247, 244, 237),
+                    Color.rgb(18, 20, 27),
+                    Color.rgb(59, 64, 76),
+                    keyboardBackground = backgroundImage
+                )
                 THEME_LIGHT -> DefaultColors(
                     themeStyle,
                     hasBorders,

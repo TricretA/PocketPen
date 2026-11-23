@@ -133,7 +133,7 @@ enum class ToolbarMode {
 val toolbarKeyStrings = entries.associateWithTo(EnumMap(ToolbarKey::class.java)) { it.toString().lowercase(Locale.US) }
 
 val defaultToolbarPref by lazy {
-    val default = listOf(SETTINGS, VOICE, HANDWRITING, CLIPBOARD, AI, UNDO, REDO, SELECT_WORD, COPY, PASTE, LEFT, RIGHT)
+    val default = listOf(SETTINGS, VOICE, HANDWRITING, CLIPBOARD, AI, UNDO, PASTE)
     val others = entries.filterNot { it in default || it == CLOSE_HISTORY }
     default.joinToString(Separators.ENTRY) { it.name + Separators.KV + true } + Separators.ENTRY +
             others.joinToString(Separators.ENTRY) { it.name + Separators.KV + false }
@@ -152,19 +152,19 @@ val defaultClipboardToolbarPref by lazy {
 
 /** add missing keys, typically because a new key has been added */
 fun upgradeToolbarPrefs(prefs: SharedPreferences) {
-    upgradeToolbarPref(prefs, Settings.PREF_TOOLBAR_KEYS, defaultToolbarPref)
+    upgradeToolbarPref(prefs, Settings.PREF_TOOLBAR_KEYS, defaultToolbarPref, setOf(HANDWRITING.name, AI.name))
     upgradeToolbarPref(prefs, Settings.PREF_PINNED_TOOLBAR_KEYS, defaultPinnedToolbarPref)
     upgradeToolbarPref(prefs, Settings.PREF_CLIPBOARD_TOOLBAR_KEYS, defaultClipboardToolbarPref)
 }
 
-private fun upgradeToolbarPref(prefs: SharedPreferences, pref: String, default: String) {
+private fun upgradeToolbarPref(prefs: SharedPreferences, pref: String, default: String, enabledByDefault: Set<String> = emptySet()) {
     if (!prefs.contains(pref)) return
     val list = prefs.getString(pref, default)!!.split(Separators.ENTRY).toMutableList()
     val splitDefault = defaultToolbarPref.split(Separators.ENTRY)
     splitDefault.forEach { entry ->
         val keyWithSeparator = entry.substringBefore(Separators.KV) + Separators.KV
         if (list.none { it.startsWith(keyWithSeparator) })
-            list.add("${keyWithSeparator}false")
+            list.add("${keyWithSeparator}${entry.substringBefore(Separators.KV) in enabledByDefault}")
     }
     // likely not needed, but better prepare for possibility of key removal
     list.removeAll {

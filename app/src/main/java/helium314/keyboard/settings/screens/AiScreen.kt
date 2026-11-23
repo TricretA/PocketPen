@@ -45,12 +45,15 @@ import helium314.keyboard.ai.AiRunner
 import helium314.keyboard.ai.AiSettings
 import helium314.keyboard.latin.R
 import helium314.keyboard.settings.SearchSettingsScreen
-import helium314.keyboard.settings.preferences.Preference
+import helium314.keyboard.settings.ui.Pill
+import helium314.keyboard.settings.ui.PillRow
+import helium314.keyboard.settings.ui.PocketScreen
+import helium314.keyboard.settings.ui.ValueTile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private enum class AiDialog { PROVIDER, KEY, MODEL, LANGUAGE, PROMPT, TEST }
+private enum class AiDialog { KEY, MODEL, LANGUAGE, PROMPT, TEST }
 
 @Composable
 fun AiScreen(onClickBack: () -> Unit) {
@@ -63,76 +66,35 @@ fun AiScreen(onClickBack: () -> Unit) {
     val language = remember(version) { AiSettings.targetLanguage(ctx) }
     val customPrompt = remember(version) { AiSettings.customPrompt(ctx) }
 
-    SearchSettingsScreen(
-        onClickBack = onClickBack,
-        title = stringResource(R.string.settings_screen_ai),
-        settings = emptyList(),
-    ) {
-        Scaffold(contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)) { innerPadding ->
-            Column(Modifier.verticalScroll(rememberScrollState()).then(Modifier.padding(innerPadding))) {
-                Preference(
-                    name = stringResource(R.string.ai_provider),
-                    description = provider.label,
-                    onClick = { dialog = AiDialog.PROVIDER }
-                )
-                Preference(
-                    name = stringResource(R.string.ai_api_key),
-                    description = stringResource(if (hasKey) R.string.ai_api_key_saved else R.string.ai_api_key_missing),
-                    onClick = { dialog = AiDialog.KEY }
-                )
-                Preference(
-                    name = stringResource(R.string.ai_model),
-                    description = model,
-                    onClick = { dialog = AiDialog.MODEL }
-                )
-                Preference(
-                    name = stringResource(R.string.ai_target_language),
-                    description = language,
-                    onClick = { dialog = AiDialog.LANGUAGE }
-                )
-                Preference(
-                    name = stringResource(R.string.ai_custom_prompt),
-                    description = customPrompt.ifBlank { stringResource(R.string.ai_custom_prompt_empty) },
-                    onClick = { dialog = AiDialog.PROMPT }
-                )
-                Preference(
-                    name = stringResource(R.string.ai_test),
-                    onClick = { dialog = AiDialog.TEST }
-                )
-                Text(
-                    text = stringResource(R.string.ai_privacy_note),
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(16.dp)
-                )
+    PocketScreen(stringResource(R.string.pp_ai), onClickBack) {
+        PillRow(
+            options = AiProvider.entries.map { it.label to it },
+            selected = provider,
+            onSelect = {
+                AiSettings.setProvider(ctx, it)
+                provider = it
             }
-        }
+        )
+        ValueTile(
+            stringResource(R.string.pp_key),
+            stringResource(if (hasKey) R.string.pp_key_saved else R.string.pp_add),
+            R.drawable.ic_pp_lock,
+            { dialog = AiDialog.KEY },
+            Modifier.fillMaxWidth()
+        )
+        ValueTile(stringResource(R.string.pp_model), model, R.drawable.ic_ai, { dialog = AiDialog.MODEL }, Modifier.fillMaxWidth())
+        ValueTile(stringResource(R.string.pp_translate_to), language, R.drawable.ic_settings_languages, { dialog = AiDialog.LANGUAGE }, Modifier.fillMaxWidth())
+        ValueTile(
+            stringResource(R.string.pp_custom),
+            customPrompt.ifBlank { stringResource(R.string.pp_add) },
+            R.drawable.ic_pp_snippet,
+            { dialog = AiDialog.PROMPT },
+            Modifier.fillMaxWidth()
+        )
+        Pill(stringResource(R.string.pp_test), true, { dialog = AiDialog.TEST }, Modifier.fillMaxWidth())
     }
 
     when (dialog) {
-        AiDialog.PROVIDER -> AlertDialog(
-            onDismissRequest = { dialog = null },
-            title = { Text(stringResource(R.string.ai_provider)) },
-            text = {
-                Column {
-                    AiProvider.entries.forEach { entry ->
-                        Row(
-                            Modifier.fillMaxWidth().clickable {
-                                AiSettings.setProvider(ctx, entry)
-                                provider = entry
-                                dialog = null
-                            },
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(selected = entry == provider, onClick = null)
-                            Text(entry.label, Modifier.padding(start = 12.dp, top = 10.dp, bottom = 10.dp))
-                        }
-                    }
-                }
-            },
-            confirmButton = {},
-            dismissButton = { TextButton(onClick = { dialog = null }) { Text(stringResource(R.string.ai_cancel)) } }
-        )
-
         AiDialog.KEY -> {
             var text by remember { mutableStateOf("") }
             AlertDialog(
