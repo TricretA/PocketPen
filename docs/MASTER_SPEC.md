@@ -91,3 +91,14 @@ HeliBoard other:
 - [x] AI panel (selected-text actions): Claude, OpenAI, OpenRouter, Groq, NVIDIA; toolbar key + settings screen; written without a local build, verified by CI only
 - [ ] Voice key + preview
 - [ ] Privacy pass, device testing, release APK
+
+## Status update
+
+- [x] Voice typing: Groq Whisper (turbo or large v3) and device voice input, recording animation, preview before insert, optional AI clean-up, offline fallback to device, microphone permission screen
+- [x] Handwriting: ML Kit Digital Ink Recognition (on-device, finger and stylus, palm rejection, shape classifier used to avoid inserting drawings). Needs minSdk 23.
+- [x] Clipboard manager screen: search, edit, add snippet, delete, custom retention
+- [x] Appearance trimmed to essentials, rest under "More appearance options"
+- [x] CI publishes the APK as the `latest` pre-release; fixed debug signing key so builds update in place
+- [ ] Deferred by decision: look and layout presets, themes marketplace, GIF and stickers
+- [ ] Not doing: clipboard database encryption (would make backups unrestorable on a new phone; Android already encrypts app storage)
+- [ ] Open risk: glide typing still needs Google's proprietary library, supplied by the user

@@ -865,6 +865,9 @@ public final class InputLogic {
             case KeyCode.AI_PANEL:
                 mLatinIME.showAiPanel();
                 break;
+            case KeyCode.HANDWRITING:
+                mLatinIME.showHandwriting();
+                break;
             case KeyCode.VOICE_INPUT:
                 // switching to shortcut IME, shift state, keyboard,... is handled by LatinIME,
                 // {@link KeyboardSwitcher#onEvent(Event)}, or {@link #onPressKey(int,int,boolean)} and {@link #onReleaseKey(int,boolean)}.

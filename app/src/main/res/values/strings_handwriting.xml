@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="handwriting" tools:keep="@string/handwriting">Handwriting</string>
+    <string name="settings_screen_handwriting">Handwriting</string>
+    <string name="hw_hint">Write here with finger or stylus</string>
+    <string name="hw_back">ABC</string>
+    <string name="hw_undo">Undo</string>
+    <string name="hw_clear">Clear</string>
+    <string name="hw_space">Space</string>
+    <string name="hw_backspace">⌫</string>
+    <string name="hw_enter">↵</string>
+    <string name="hw_preparing">Getting ready…</string>
+    <string name="hw_downloading">Downloading handwriting model, about 20 MB…</string>
+    <string name="hw_model_failed">Handwriting model not available. Connect to the internet once.</string>
+    <string name="hw_retry">Retry</string>
+    <string name="hw_reading">Reading…</string>
+    <string name="hw_no_text">No text found</string>
+    <string name="hw_not_text">Looks like a drawing, not text. Tap a word to insert it anyway.</string>
+    <string name="hw_error_password">Handwriting is disabled in password fields</string>
+    <string name="hw_language">Language</string>
+    <string name="hw_auto_insert">Insert automatically</string>
+    <string name="hw_auto_insert_on">On, text is inserted when you pause</string>
+    <string name="hw_auto_insert_off">Off, tap a suggestion to insert</string>
+    <string name="hw_add_space">Add a space after words</string>
+    <string name="hw_on">On</string>
+    <string name="hw_off">Off</string>
+    <string name="hw_pause">Pause before reading</string>
+    <string name="hw_pause_fast">Short</string>
+    <string name="hw_pause_normal">Normal</string>
+    <string name="hw_pause_slow">Long</string>
+    <string name="hw_palm_rejection">Ignore palm while using a stylus</string>
+    <string name="hw_download_model">Download language model now</string>
+    <string name="hw_download_done">Model ready</string>
+    <string name="hw_note">Recognition runs on the phone. The language model is downloaded once from Google, about 20 MB per language, then works offline.</string>
+</resources>

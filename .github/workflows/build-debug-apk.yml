@@ -74,7 +74,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Unit tests
-        run: ./gradlew testDebugUnitTest --tests 'helium314.keyboard.ClipboardDaoTest' --tests 'helium314.keyboard.AiClientTest'
+        run: ./gradlew testDebugUnitTest --tests 'helium314.keyboard.ClipboardDaoTest' --tests 'helium314.keyboard.AiClientTest' --tests 'helium314.keyboard.InkJudgeTest'
 
       - name: Archive test reports
         uses: actions/upload-artifact@v4

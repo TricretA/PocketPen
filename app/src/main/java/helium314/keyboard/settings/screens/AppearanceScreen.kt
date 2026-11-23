@@ -29,6 +29,8 @@ import helium314.keyboard.settings.SettingsWithoutKey
 import helium314.keyboard.settings.Setting
 import helium314.keyboard.settings.preferences.Preference
 import helium314.keyboard.settings.SearchSettingsScreen
+import helium314.keyboard.latin.utils.NextScreenIcon
+import helium314.keyboard.settings.SettingsDestination
 import helium314.keyboard.settings.SettingsActivity
 import helium314.keyboard.settings.preferences.SliderPreference
 import helium314.keyboard.settings.preferences.SwitchPreference
@@ -58,19 +60,42 @@ fun AppearanceScreen(
     val dayNightMode = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P && prefs.getBoolean(Settings.PREF_THEME_DAY_NIGHT, Defaults.PREF_THEME_DAY_NIGHT)
     val items = listOf(
         R.string.settings_screen_theme,
+        Settings.PREF_THEME_COLORS,
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
+            Settings.PREF_THEME_DAY_NIGHT else null,
+        if (dayNightMode) Settings.PREF_THEME_COLORS_NIGHT else null,
+        Settings.PREF_THEME_KEY_BORDERS,
         Settings.PREF_THEME_STYLE,
+        SettingsWithoutKey.BACKGROUND_IMAGE,
+        R.string.appearance_category_size,
+        Settings.PREF_KEYBOARD_HEIGHT_SCALE_PREFIX,
+        Settings.PREF_FONT_SCALE,
+        APPEARANCE_MORE_KEY,
+    )
+    SearchSettingsScreen(
+        onClickBack = onClickBack,
+        title = stringResource(R.string.settings_screen_appearance),
+        settings = items
+    )
+}
+
+const val APPEARANCE_MORE_KEY = "appearance_more_options"
+
+@Composable
+fun AppearanceMoreScreen(
+    onClickBack: () -> Unit,
+) {
+    val ctx = LocalContext.current
+    val prefs = ctx.prefs()
+    val b = (LocalContext.current.getActivity() as? SettingsActivity)?.prefChanged?.collectAsState()
+    if ((b?.value ?: 0) < 0)
+        Log.v("irrelevant", "stupid way to trigger recomposition on preference change")
+    val items = listOf(
         Settings.PREF_ICON_STYLE,
         Settings.PREF_ACCENT_SHIFTED_ICON,
         Settings.PREF_CUSTOM_ICON_NAMES,
-        Settings.PREF_THEME_KEY_BORDERS,
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
-            Settings.PREF_THEME_DAY_NIGHT else null,
-        Settings.PREF_THEME_COLORS,
-        if (dayNightMode) Settings.PREF_THEME_COLORS_NIGHT else null,
         Settings.PREF_NAVBAR_COLOR,
-        SettingsWithoutKey.BACKGROUND_IMAGE,
         SettingsWithoutKey.BACKGROUND_IMAGE_LANDSCAPE,
-        R.string.settings_category_miscellaneous,
         Settings.PREF_ENABLE_SPLIT_KEYBOARD,
         if (prefs.getBoolean(Settings.PREF_ENABLE_SPLIT_KEYBOARD_LANDSCAPE, Defaults.PREF_ENABLE_SPLIT_KEYBOARD)
             || prefs.getBoolean(Settings.PREF_ENABLE_SPLIT_KEYBOARD, Defaults.PREF_ENABLE_SPLIT_KEYBOARD)
@@ -80,13 +105,11 @@ fun AppearanceScreen(
             Settings.PREF_SPLIT_SPACER_SCALE_PREFIX else null,
         if (prefs.getBoolean(Settings.PREF_THEME_KEY_BORDERS, Defaults.PREF_THEME_KEY_BORDERS))
             Settings.PREF_KEY_GAP_SCALE_PREFIX else null,
-        Settings.PREF_KEYBOARD_HEIGHT_SCALE_PREFIX,
         Settings.PREF_BOTTOM_ROW_SCALE_PREFIX,
         Settings.PREF_BOTTOM_PADDING_SCALE_PREFIX,
         Settings.PREF_SIDE_PADDING_SCALE_PREFIX,
         Settings.PREF_SPACE_BAR_TEXT,
         SettingsWithoutKey.CUSTOM_FONT,
-        Settings.PREF_FONT_SCALE,
         if (prefs.getBoolean(Settings.PREF_SHOW_HINTS, Defaults.PREF_SHOW_HINTS)) Settings.PREF_HINT_FONT_SCALE else null,
         SettingsWithoutKey.CUSTOM_EMOJI_FONT,
         Settings.PREF_EMOJI_FONT_SCALE,
@@ -97,12 +120,18 @@ fun AppearanceScreen(
     )
     SearchSettingsScreen(
         onClickBack = onClickBack,
-        title = stringResource(R.string.settings_screen_appearance),
+        title = stringResource(R.string.appearance_more_options),
         settings = items
     )
 }
 
 fun createAppearanceSettings(context: Context) = listOf(
+    Setting(context, APPEARANCE_MORE_KEY, R.string.appearance_more_options) { setting ->
+        Preference(
+            name = setting.title,
+            onClick = { SettingsDestination.navigateTo(SettingsDestination.AppearanceMore) }
+        ) { NextScreenIcon() }
+    },
     Setting(context, Settings.PREF_THEME_STYLE, R.string.theme_style) { setting ->
         val ctx = LocalContext.current
         val prefs = ctx.prefs()

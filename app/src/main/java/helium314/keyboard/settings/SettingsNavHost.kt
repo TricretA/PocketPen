@@ -18,9 +18,11 @@ import helium314.keyboard.latin.settings.SettingsSubtype.Companion.toSettingsSub
 import helium314.keyboard.latin.settings.getTransitionAnimationScale
 import helium314.keyboard.settings.screens.AboutScreen
 import helium314.keyboard.settings.screens.AiScreen
+import helium314.keyboard.settings.screens.HandwritingScreen
 import helium314.keyboard.settings.screens.ClipboardManagerScreen
 import helium314.keyboard.settings.screens.VoiceScreen
 import helium314.keyboard.settings.screens.AdvancedSettingsScreen
+import helium314.keyboard.settings.screens.AppearanceMoreScreen
 import helium314.keyboard.settings.screens.AppearanceScreen
 import helium314.keyboard.settings.screens.ColorsScreen
 import helium314.keyboard.settings.screens.DebugScreen
@@ -84,11 +86,15 @@ fun SettingsNavHost(
                 onClickAi = { navController.navigate(SettingsDestination.Ai) },
                 onClickVoice = { navController.navigate(SettingsDestination.Voice) },
                 onClickClipboard = { navController.navigate(SettingsDestination.ClipboardManager) },
+                onClickHandwriting = { navController.navigate(SettingsDestination.Handwriting) },
                 onClickBack = ::goBack,
             )
         }
         composable(SettingsDestination.ClipboardManager) {
             ClipboardManagerScreen(onClickBack = ::goBack)
+        }
+        composable(SettingsDestination.Handwriting) {
+            HandwritingScreen(onClickBack = ::goBack)
         }
         composable(SettingsDestination.Voice) {
             VoiceScreen(onClickBack = ::goBack)
@@ -122,6 +128,9 @@ fun SettingsNavHost(
         }
         composable(SettingsDestination.Debug) {
             DebugScreen(onClickBack = ::goBack)
+        }
+        composable(SettingsDestination.AppearanceMore) {
+            AppearanceMoreScreen(onClickBack = ::goBack)
         }
         composable(SettingsDestination.Appearance) {
             AppearanceScreen(onClickBack = ::goBack)
@@ -164,6 +173,7 @@ object SettingsDestination {
     const val About = "about"
     const val Ai = "ai"
     const val Voice = "voice"
+    const val Handwriting = "handwriting"
     const val ClipboardManager = "clipboard_manager"
     const val TextCorrection = "text_correction"
     const val Preferences = "preferences"
@@ -174,6 +184,7 @@ object SettingsDestination {
     const val Advanced = "advanced"
     const val Debug = "debug"
     const val Appearance = "appearance"
+    const val AppearanceMore = "appearance_more"
     const val Colors = "colors/"
     const val ColorsNight = "colors_night/"
     const val PersonalDictionaries = "personal_dictionaries"

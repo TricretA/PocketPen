@@ -182,7 +182,7 @@ fun VoiceScreen(onClickBack: () -> Unit) {
 }
 
 @Composable
-private fun ChoiceDialog(
+internal fun ChoiceDialog(
     title: String,
     options: List<Pair<String, String>>,
     selected: String,

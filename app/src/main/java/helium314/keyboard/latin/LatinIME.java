@@ -7,6 +7,7 @@
 package helium314.keyboard.latin;
 
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -65,6 +66,7 @@ import helium314.keyboard.latin.utils.GestureDataGatheringKt;
 import helium314.keyboard.latin.utils.GestureDataGatheringSettings;
 import helium314.keyboard.latin.utils.InlineAutofillUtils;
 import helium314.keyboard.ai.AiPanelKt;
+import helium314.keyboard.handwriting.HandwritingPanelKt;
 import helium314.keyboard.voice.VoiceLauncher;
 import helium314.keyboard.latin.utils.InputMethodPickerKt;
 import helium314.keyboard.latin.utils.JniUtils;
@@ -132,7 +134,7 @@ public class LatinIME extends InputMethodService implements
     private Context mDisplayContext;
 
     private final StuffReceiver mReceiver = new StuffReceiver(this);
-    private AlertDialog mOptionsDialog;
+    private Dialog mOptionsDialog;
 
     private final boolean mIsHardwareAcceleratedDrawingEnabled;
 
@@ -1199,7 +1201,7 @@ public class LatinIME extends InputMethodService implements
         return false;
     }
 
-    public void showOptionsDialog(final AlertDialog dialog) {
+    public void showOptionsDialog(final Dialog dialog) {
         if (isShowingOptionDialog()) return;
         mOptionsDialog = dialog;
         dialog.show();
@@ -1207,6 +1209,16 @@ public class LatinIME extends InputMethodService implements
 
     public void switchToDeviceVoiceInput() {
         mRichImm.switchToShortcutIme(this);
+    }
+
+    public void showHandwriting() {
+        if (isShowingOptionDialog()) return;
+        final View keyboardView = mKeyboardSwitcher.getMainKeyboardView();
+        if (keyboardView == null) return;
+        final Dialog dialog = HandwritingPanelKt.createHandwritingDialog(this, keyboardView);
+        if (dialog == null) return;
+        mOptionsDialog = dialog;
+        dialog.show();
     }
 
     public void showAiPanel() {

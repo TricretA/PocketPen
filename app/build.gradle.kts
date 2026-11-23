@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.pocketpen.keyboard"
-        minSdk = 21
+        minSdk = 23
         targetSdk = 37
         versionCode = 4301
         versionName = "4.3-beta2"
@@ -133,6 +133,7 @@ dependencies {
 
     // kotlin
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
+    implementation("com.google.mlkit:digital-ink-recognition:19.0.0")
 
     // compose
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")

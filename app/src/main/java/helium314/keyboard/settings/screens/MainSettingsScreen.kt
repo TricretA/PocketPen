@@ -45,6 +45,7 @@ fun MainSettingsScreen(
     onClickAi: () -> Unit,
     onClickVoice: () -> Unit,
     onClickClipboard: () -> Unit,
+    onClickHandwriting: () -> Unit,
     onClickBack: () -> Unit,
 ) {
     SearchSettingsScreen(
@@ -117,6 +118,11 @@ fun MainSettingsScreen(
                     icon = R.drawable.sym_keyboard_clipboard_lxx
                 ) { NextScreenIcon() }
                 Preference(
+                    name = stringResource(R.string.settings_screen_handwriting),
+                    onClick = onClickHandwriting,
+                    icon = R.drawable.ic_handwriting
+                ) { NextScreenIcon() }
+                Preference(
                     name = stringResource(R.string.settings_screen_voice),
                     onClick = onClickVoice,
                     icon = R.drawable.sym_keyboard_voice_lxx
@@ -142,7 +148,7 @@ private fun PreviewScreen() {
     initPreview(LocalContext.current)
     Theme(previewDark) {
         Surface {
-            MainSettingsScreen({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
+            MainSettingsScreen({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
         }
     }
 }

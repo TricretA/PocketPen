@@ -21,24 +21,40 @@ Pocketpen is a fork of [HeliBoard](https://github.com/Helium314/HeliBoard), whic
 - Keys are encrypted with the Android Keystore, kept out of backups, and never leave the device except to the provider you chose.
 - Nothing is sent until you tap an action. The panel is disabled in password fields.
 
+**Voice typing**
+- The mic key uses Groq Whisper for accurate dictation, or your device's own voice input. Pick either in settings.
+- A live recording animation and timer, then a preview you review before inserting. Optional AI clean-up of the transcript.
+- Works offline by switching to the device's voice input automatically. Audio is deleted from the phone right after transcribing.
+
+**Handwriting**
+- A toolbar key turns the keys into a white canvas. Write with a finger or a stylus and the words are read and inserted when you pause.
+- Palm rejection while using a stylus. Drawings and shapes are not inserted as text; you can still tap a suggestion to insert one.
+- Reading happens on the phone. The language model downloads once, about 20 MB per language.
+
+**Clipboard manager**
+- Search, edit, add snippets, delete, and set a custom retention period from Settings.
+
+**Simple appearance**
+- Theme colors, day and night, key borders, key style, background image, keyboard height and font size on one short screen. Everything else is under "More appearance options".
+
 **Everything HeliBoard already does**
 Suggestions and autocorrect, dictionaries, themes, custom layouts, number row, one-handed mode, emoji, and a privacy-first design with no analytics.
 
 ## Status
 
-Under active development. Clipboard tabs and the AI panel are new and have been verified by automated builds and unit tests, not yet on a range of devices.
+Under active development. New features are verified by automated builds and unit tests, and still need testing on real devices.
 
-Planned: clipboard search and entry editing, a Gboard-style default look, layout presets, and voice dictation with preview before inserting.
+Still to come: a Gboard-style default look and layout presets.
 
 See [docs/MASTER_SPEC.md](docs/MASTER_SPEC.md) for scope, decisions and the roadmap.
 
 ## Building
 
-Builds and tests run on GitHub Actions. Every push to `main` produces a debug APK as a workflow artifact. See [docs/BUILDING.md](docs/BUILDING.md).
+Builds and tests run on GitHub Actions. Every push to `main` publishes the debug APK to the [latest release](../../releases/latest). See [docs/BUILDING.md](docs/BUILDING.md).
 
 ## Privacy
 
-No analytics and no telemetry. The only network access is the AI assistant, and only when you tap an action.
+No analytics and no telemetry. The network is used only for the AI assistant, Groq voice typing, and the one-time handwriting model download, and only when you use those features.
 
 ## License
 
