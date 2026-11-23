@@ -1,0 +1,43 @@
+name: Screenshots
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: screens-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  screens:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - uses: gradle/actions/setup-gradle@v3
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Render screens
+        run: ./gradlew testDebugUnitTest --tests 'helium314.keyboard.ScreenshotTest'
+        continue-on-error: true
+
+      - name: Publish screenshots
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ls app/build/screens || exit 0
+          gh release view screens >/dev/null 2>&1 || gh release create screens --prerelease --title "Screens" --notes "Rendered screens, replaced on every push."
+          gh release upload screens app/build/screens/*.png --clobber
