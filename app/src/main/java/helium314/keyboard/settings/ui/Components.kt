@@ -30,9 +30,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
@@ -76,7 +73,7 @@ fun PocketFrame(title: String, onBack: (() -> Unit)?, content: @Composable Colum
             if (onBack != null) {
                 KeyCap(onClick = onBack, modifier = Modifier.size(52.dp), corner = 18.dp) {
                     Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack,
+                        painterResource(R.drawable.ic_pp_back),
                         contentDescription = stringResource(R.string.pp_back),
                         tint = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.align(Alignment.Center).size(26.dp)
@@ -422,7 +419,7 @@ fun ThemeSwatch(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        Icons.Filled.Check,
+                        painterResource(R.drawable.ic_pp_check),
                         contentDescription = null,
                         tint = PP.Ink,
                         modifier = Modifier.size(16.dp)

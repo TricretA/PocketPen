@@ -4,11 +4,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.ui.draw.clip
@@ -107,7 +102,7 @@ fun ClipboardManagerScreen(onClickBack: () -> Unit) {
                 )
                 KeyCap(onClick = { dialog = ClipDialog.Add }, modifier = Modifier.size(88.dp), color = PP.Signal, lip = Color(0xFFB93405), corner = 24.dp) {
                     Icon(
-                        Icons.Filled.Add,
+                        painterResource(R.drawable.ic_pp_add),
                         contentDescription = stringResource(R.string.pp_snippet),
                         tint = PP.Ink,
                         modifier = Modifier.align(Alignment.Center).size(34.dp)
@@ -119,7 +114,7 @@ fun ClipboardManagerScreen(onClickBack: () -> Unit) {
                 onValueChange = { query = it },
                 singleLine = true,
                 placeholder = { Text(stringResource(R.string.pp_search)) },
-                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                leadingIcon = { Icon(painterResource(R.drawable.ic_pp_search), contentDescription = null) },
                 shape = RoundedCornerShape(28.dp),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -172,10 +167,10 @@ fun ClipboardManagerScreen(onClickBack: () -> Unit) {
                             Icon(painterResource(R.drawable.ic_pp_pin), contentDescription = stringResource(R.string.pp_pin), modifier = Modifier.size(22.dp))
                         }
                         if (entry.filename == null) IconButton(onClick = { dialog = ClipDialog.Edit(entry) }) {
-                            Icon(Icons.Filled.Edit, contentDescription = stringResource(R.string.pp_edit), modifier = Modifier.size(22.dp))
+                            Icon(painterResource(R.drawable.ic_pp_edit), contentDescription = stringResource(R.string.pp_edit), modifier = Modifier.size(22.dp))
                         }
                         IconButton(onClick = { dialog = ClipDialog.Delete(entry) }) {
-                            Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.pp_delete), modifier = Modifier.size(22.dp))
+                            Icon(painterResource(R.drawable.ic_pp_delete), contentDescription = stringResource(R.string.pp_delete), modifier = Modifier.size(22.dp))
                         }
                     }
                 }
