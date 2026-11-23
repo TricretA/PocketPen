@@ -1,8 +1,8 @@
-# TriKey
+# Pocketpen
 
 A personal Android keyboard with a clipboard that remembers and AI writing tools built in.
 
-TriKey is a fork of [HeliBoard](https://github.com/Helium314/HeliBoard), which is itself based on the Android Open Source Project keyboard. It keeps that proven typing engine and adds the things a daily driver should have.
+Pocketpen is a fork of [HeliBoard](https://github.com/Helium314/HeliBoard), which is itself based on the Android Open Source Project keyboard. It keeps that proven typing engine and adds the things a daily driver should have.
 
 ## What it adds
 

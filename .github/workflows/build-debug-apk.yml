@@ -13,6 +13,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
@@ -34,8 +36,17 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: MyKeys-debug
+          name: Pocketpen-debug
           path: app/build/outputs/apk/debug/*-debug*.apk
+
+      - name: Publish test build
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          APK=$(ls app/build/outputs/apk/debug/*-debug*.apk | head -n 1)
+          gh release delete latest --cleanup-tag --yes || true
+          gh release create latest "$APK" --prerelease --target "$GITHUB_SHA" --title "Pocketpen test build" --notes "Debug build of commit ${GITHUB_SHA::7}. Install over the previous build to update."
 
       - name: Archive reports for failed job
         uses: actions/upload-artifact@v4

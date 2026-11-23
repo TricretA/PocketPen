@@ -82,7 +82,7 @@ HeliBoard other:
 - [x] Recon: HeliBoard, CleverKeys, FlorisBoard cloned and assessed
 - [x] Fork created from HeliBoard full history (`upstream` remote retained)
 - [x] Baseline build of unmodified fork (27 MB debug APK; Maven Central 429s need retry — see `docs/BUILDING.md`)
-- [x] Rebrand: applicationId `com.personal.keyboard`, name "MyKeys" (working name, change freely), provider authorities, APK name. Icon still HeliBoard's.
+- [x] Rebrand: applicationId `com.pocketpen.keyboard`, name "Pocketpen", provider authorities, APK name. Icon still HeliBoard's.
 - [x] Clipboard v2 step 1: retention presets (1h/1d/7d/30d/90d/never), default 30 days (was 10 min), pinned exempt (already was), `IS_SENSITIVE` clips no longer stored
 - [x] Clipboard v2 step 2a: tabs (All/Recent/Pinned/Snippets), snippets (DB v4 `KIND` column, protected from expiry/clear, removable by swipe only in Snippets tab), long-press cycles unpinned -> pinned -> snippet. 5 unit tests.
 - [ ] Clipboard v2 step 2b: search, edit entry, add-snippet-by-typing, custom retention period, DB encryption

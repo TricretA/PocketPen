@@ -10,7 +10,7 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.personal.keyboard"
+        applicationId = "com.pocketpen.keyboard"
         minSdk = 21
         targetSdk = 37
         versionCode = 4301
@@ -20,6 +20,15 @@ android {
             abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
         }
         proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+    }
+
+    signingConfigs {
+        getByName("debug") {
+            storeFile = rootProject.file("keystore/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
     }
 
     buildTypes {
@@ -66,7 +75,7 @@ android {
             }
             variant.outputs.forEach { output ->
                 if (output is com.android.build.api.variant.impl.VariantOutputImpl) {
-                    output.outputFileName = "MyKeys_${defaultConfig.versionName}-${variant.buildType}.apk"
+                    output.outputFileName = "Pocketpen_${defaultConfig.versionName}-${variant.buildType}.apk"
                 }
             }
         }
