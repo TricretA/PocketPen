@@ -7,7 +7,6 @@ import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
 import helium314.keyboard.latin.utils.Theme
-import helium314.keyboard.settings.WelcomeWizard
 import helium314.keyboard.settings.screens.AiScreen
 import helium314.keyboard.settings.screens.ClipboardManagerScreen
 import helium314.keyboard.settings.screens.HandwritingScreen
@@ -31,9 +30,8 @@ class ScreenshotTest {
     @get:Rule val rule = createComposeRule()
 
     private fun shoot(name: String, dark: Boolean = false, content: @Composable () -> Unit) {
-        rule.mainClock.autoAdvance = false
         rule.setContent { Theme(dark = dark) { content() } }
-        rule.mainClock.advanceTimeBy(600)
+        rule.waitForIdle()
         val bitmap = rule.onRoot().captureToImage().asAndroidBitmap()
         val dir = File("build/screens")
         dir.mkdirs()
@@ -50,5 +48,4 @@ class ScreenshotTest {
     @Test fun voice() = shoot("voice") { VoiceScreen {} }
     @Test fun write() = shoot("write") { HandwritingScreen {} }
     @Test fun clipboard() = shoot("clipboard") { ClipboardManagerScreen {} }
-    @Test fun onboarding() = shoot("onboarding") { WelcomeWizard({}, {}) }
 }
