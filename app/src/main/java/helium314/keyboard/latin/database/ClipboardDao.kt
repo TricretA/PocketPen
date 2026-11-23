@@ -194,8 +194,9 @@ class ClipboardDao private constructor(private val db: Database) {
             return
 
         lastClearOldClips = SystemClock.elapsedRealtime()
-        val retentionTime = Settings.getValues()?.mClipboardHistoryRetentionTime ?: 121L
-        if (retentionTime > 120) return
+        // retention is in minutes, 0 (or less) means entries never expire. Pinned entries are never expired.
+        val retentionTime = Settings.getValues()?.mClipboardHistoryRetentionTime ?: 0L
+        if (retentionTime <= 0) return
         val minTime = System.currentTimeMillis() - retentionTime * 60 * 1000L
         val toRemove = cache.filter { it.timeStamp < minTime && !it.isPinned }
         delete(toRemove)

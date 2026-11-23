@@ -210,6 +210,13 @@
     <string name="enable_clipboard_history_summary">If disabled, clipboard key will paste clipboard content if any</string>
     <!-- Preferences item for controlling clipboard history retention time -->
     <string name="clipboard_history_retention_time">History retention time</string>
+    <string name="clipboard_retention_1_hour">1 hour</string>
+    <string name="clipboard_retention_1_day">1 day</string>
+    <string name="clipboard_retention_7_days">7 days</string>
+    <string name="clipboard_retention_30_days">30 days</string>
+    <string name="clipboard_retention_90_days">90 days</string>
+    <string name="clipboard_retention_never">Never expire</string>
+    <string name="clipboard_retention_pinned_note">Pinned items are never deleted automatically.</string>
     <!-- Preferences item for showing pinned clipboard items first -->
     <string name="clipboard_history_pinned_first">Show pinned items on top</string>
     <!-- Preferences item for extending the clipboard history to files (images or others) -->
