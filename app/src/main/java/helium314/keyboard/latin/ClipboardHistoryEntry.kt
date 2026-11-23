@@ -24,7 +24,6 @@ class ClipboardHistoryEntry(
     val text: String?,
     val filename: String?,
     val mimeTypes: List<String>?,
-    /** Snippets are user-kept reusable entries. They are always pinned too, so they never expire or get cleared. */
     var isSnippet: Boolean = false
 ) : Comparable<ClipboardHistoryEntry> {
     // for display order

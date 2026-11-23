@@ -17,7 +17,6 @@ class ClipboardLayoutParams(ctx: Context) {
     private val keyHorizontalGap: Int
     private val listHeight: Int
     val bottomRowKeyboardHeight: Int
-    /** height of the row with the tabs (all / recent / pinned / snippets), taken from the list height */
     val tabRowHeight: Int
 
     init {

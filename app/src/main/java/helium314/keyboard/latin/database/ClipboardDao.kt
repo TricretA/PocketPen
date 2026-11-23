@@ -27,7 +27,6 @@ class ClipboardDao private constructor(private val db: Database) {
         fun onClipInserted(position: Int)
         fun onClipsRemoved(position: Int, count: Int)
         fun onClipMoved(oldPosition: Int, newPosition: Int)
-        /** the visible list changed in a way that can't be described by single insert/remove/move operations */
         fun onClipsChanged()
     }
 
@@ -38,7 +37,6 @@ class ClipboardDao private constructor(private val db: Database) {
         SNIPPETS({ it.isSnippet }),
     }
 
-    /** the tab currently shown; all index based functions refer to the entries of this tab */
     var tab = Tab.ALL
         set(value) {
             field = value
@@ -177,7 +175,6 @@ class ClipboardDao private constructor(private val db: Database) {
 
     fun isPinned(index: Int) = shown[index].isPinned
 
-    /** Snippets can only be removed by swiping in the snippets tab, other pinned entries can't be swiped away. */
     fun canRemove(index: Int): Boolean {
         val entry = shown.getOrNull(index) ?: return false
         return !entry.isPinned || (entry.isSnippet && tab == Tab.SNIPPETS)
@@ -187,10 +184,8 @@ class ClipboardDao private constructor(private val db: Database) {
 
     fun get(id: Long) = cache.first { it.id == id }
 
-    /** all entries, regardless of the current tab */
     fun getAll(): List<ClipboardHistoryEntry> = cache
 
-    /** number of entries in the current tab */
     fun count() = shown.size
 
     fun sort() {
@@ -198,7 +193,6 @@ class ClipboardDao private constructor(private val db: Database) {
         refreshShown()
     }
 
-    /** Cycles an entry through unpinned -> pinned -> snippet -> unpinned. Returns the new state, one of [STATE_UNPINNED], [STATE_PINNED], [STATE_SNIPPET]. */
     fun cycleKind(id: Long): Int = synchronized(this) {
         val entry = cache.first { it.id == id }
         val state = when {
@@ -237,7 +231,6 @@ class ClipboardDao private constructor(private val db: Database) {
             return
 
         lastClearOldClips = SystemClock.elapsedRealtime()
-        // retention is in minutes, 0 (or less) means entries never expire. Pinned entries are never expired.
         val retentionTime = Settings.getValues()?.mClipboardHistoryRetentionTime ?: 0L
         if (retentionTime <= 0) return
         val minTime = System.currentTimeMillis() - retentionTime * 60 * 1000L
@@ -247,7 +240,7 @@ class ClipboardDao private constructor(private val db: Database) {
 
     fun clearNonPinned() {
         val toRemove = cache.filter { !it.isPinned }
-        if (toRemove.isEmpty()) return // nothing to remove
+        if (toRemove.isEmpty()) return
         delete(toRemove)
         listener?.onClipsChanged()
     }
@@ -296,7 +289,7 @@ class ClipboardDao private constructor(private val db: Database) {
         private const val COLUMN_PINNED = "PINNED"
         private const val COLUMN_TEXT = "TEXT" // we could enforce unique text, but that's only necessary if we can drop the cache (later)
         private const val COLUMN_FILE = "FILE" // path relative to files dir
-        private const val COLUMN_KIND = "KIND" // KIND_CLIP or KIND_SNIPPET
+        private const val COLUMN_KIND = "KIND"
         private const val COLUMN_MIME_TYPE = "MIME_TYPE" // for files, actually a list of mime types according to clipboard description
         const val CREATE_TABLE = """
             CREATE TABLE $TABLE (

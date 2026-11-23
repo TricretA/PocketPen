@@ -75,7 +75,6 @@ class ClipboardHistoryManager(
         if (clipData.itemCount == 0) return
         val clipItem = clipData.getItemAt(0) ?: return
         val description = clipData.description ?: return
-        // Never persist content the source app flagged as sensitive (passwords, OTPs, ...)
         if (ClipboardManagerCompat.getClipSensitivity(description) == true) return
         val timeStamp = ClipboardManagerCompat.getClipTimestamp(clipData)
 
@@ -139,7 +138,6 @@ class ClipboardHistoryManager(
         }
     }
 
-    /** cycles unpinned -> pinned -> snippet -> unpinned, returns one of the ClipboardDao.STATE_ constants */
     fun cycleClipKind(id: Long) = clipboardDao?.cycleKind(id) ?: ClipboardDao.STATE_UNPINNED
 
     var clipboardTab: ClipboardDao.Tab

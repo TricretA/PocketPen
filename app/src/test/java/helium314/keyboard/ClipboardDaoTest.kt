@@ -54,7 +54,7 @@ class ClipboardDaoTest {
         dao.clearNonPinned()
         assertEquals(listOf("snippet"), dao.getAll().map { it.text })
         dao.tab = Tab.ALL
-        assertFalse(dao.canRemove(0)) // protected outside the snippet tab
+        assertFalse(dao.canRemove(0))
         dao.tab = Tab.SNIPPETS
         assertTrue(dao.canRemove(0))
         dao.tab = Tab.ALL
@@ -66,7 +66,6 @@ class ClipboardDaoTest {
         dao.insertNewEntry(old, false, "old recent", null, null, null)
         dao.insertNewEntry(old, true, "old pinned", null, null, null)
         dao.insertNewEntry(old, false, "old snippet", null, null, null, snippet = true)
-        // default retention is 30 days (settings values may be unavailable in tests -> 0 = never; only assert nothing pinned is lost)
         dao.clearOldClips(true)
         val left = dao.getAll().map { it.text }
         assertTrue("old pinned" in left && "old snippet" in left)
