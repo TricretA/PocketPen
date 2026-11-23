@@ -88,6 +88,6 @@ HeliBoard other:
 - [ ] Clipboard v2 step 2b: search, edit entry, add-snippet-by-typing, custom retention period, DB encryption
   - UI is untested on a device/emulator (none available in the build container): verify tab row height and long-press cycle on a phone.
 - [ ] Gboard-style default look + layout presets
-- [ ] AI panel (selected-text actions)
+- [x] AI panel (selected-text actions): Claude, OpenAI, OpenRouter, Groq, NVIDIA; toolbar key + settings screen; written without a local build, verified by CI only
 - [ ] Voice key + preview
 - [ ] Privacy pass, device testing, release APK

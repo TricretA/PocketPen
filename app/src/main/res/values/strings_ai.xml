@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="ai" tools:keep="@string/ai">AI assistant</string>
+    <string name="settings_screen_ai">AI assistant</string>
+    <string name="ai_provider">Provider</string>
+    <string name="ai_api_key">API key</string>
+    <string name="ai_api_key_saved">Saved on this device, encrypted</string>
+    <string name="ai_api_key_missing">Not set</string>
+    <string name="ai_api_key_remove">Remove key</string>
+    <string name="ai_model">Model</string>
+    <string name="ai_fetch_models">Load available models</string>
+    <string name="ai_fetching_models">Loading models…</string>
+    <string name="ai_target_language">Translation language</string>
+    <string name="ai_custom_prompt">Custom action instruction</string>
+    <string name="ai_custom_prompt_empty">Not set</string>
+    <string name="ai_test">Test connection</string>
+    <string name="ai_testing">Testing…</string>
+    <string name="ai_save">Save</string>
+    <string name="ai_cancel">Cancel</string>
+    <string name="ai_close">Close</string>
+    <string name="ai_privacy_note">Text is sent to the selected provider only when you tap an AI action, and never from password fields. Your API key stays on this device.</string>
+    <string name="ai_header">%1$s · %2$s\n%3$s</string>
+    <string name="ai_source_selection">Selected text, %1$d characters</string>
+    <string name="ai_source_field">Whole field, %1$d characters</string>
+    <string name="ai_choose_action">Choose an action</string>
+    <string name="ai_working">Working…</string>
+    <string name="ai_apply">Replace text</string>
+    <string name="ai_restore">Restore original</string>
+    <string name="ai_error_no_key">No API key set for %1$s. Add one in Settings, AI assistant.</string>
+    <string name="ai_error_no_custom_prompt">Set the custom instruction in Settings, AI assistant.</string>
+    <string name="ai_error_password">AI is disabled in password fields</string>
+    <string name="ai_error_empty">Type or select some text first</string>
+    <string name="ai_action_fix_grammar">Fix grammar</string>
+    <string name="ai_action_rewrite">Rewrite</string>
+    <string name="ai_action_shorten">Shorten</string>
+    <string name="ai_action_expand">Expand</string>
+    <string name="ai_action_professional">Professional</string>
+    <string name="ai_action_casual">Casual</string>
+    <string name="ai_action_polite">Polite</string>
+    <string name="ai_action_summarize">Summarize</string>
+    <string name="ai_action_translate">Translate</string>
+    <string name="ai_action_reply">Reply</string>
+    <string name="ai_action_ask">Ask AI</string>
+    <string name="ai_action_custom">Custom</string>
+</resources>

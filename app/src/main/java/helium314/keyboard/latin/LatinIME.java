@@ -64,6 +64,7 @@ import helium314.keyboard.latin.utils.ColorUtilKt;
 import helium314.keyboard.latin.utils.GestureDataGatheringKt;
 import helium314.keyboard.latin.utils.GestureDataGatheringSettings;
 import helium314.keyboard.latin.utils.InlineAutofillUtils;
+import helium314.keyboard.ai.AiPanelKt;
 import helium314.keyboard.latin.utils.InputMethodPickerKt;
 import helium314.keyboard.latin.utils.JniUtils;
 import helium314.keyboard.latin.utils.KtxKt;
@@ -1195,6 +1196,16 @@ public class LatinIME extends InputMethodService implements
             return true;
         }
         return false;
+    }
+
+    public void showAiPanel() {
+        if (isShowingOptionDialog()) return;
+        final View keyboardView = mKeyboardSwitcher.getMainKeyboardView();
+        if (keyboardView == null) return;
+        final AlertDialog dialog = AiPanelKt.createAiPanelDialog(this, keyboardView.getWindowToken());
+        if (dialog == null) return;
+        mOptionsDialog = dialog;
+        dialog.show();
     }
 
     private boolean isShowingOptionDialog() {

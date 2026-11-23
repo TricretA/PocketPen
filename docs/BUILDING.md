@@ -1,12 +1,7 @@
 # Building
 
-Requirements: JDK 21, Android SDK (`platforms;android-37.0`, `build-tools;36.0.0`, `ndk;28.0.13004108`).
+Builds and tests run on GitHub Actions (`.github/workflows/build-debug-apk.yml`), not locally.
+Every push to `main` builds the debug APK and runs the unit tests. Download the APK from the run's artifacts (`MyKeys-debug`).
 
-```bash
-echo "sdk.dir=$HOME/android-sdk" > local.properties   # git-ignored
-./gradlew :app:assembleDebug -x lint --max-workers=2
-# -> app/build/outputs/apk/debug/MyKeys_<version>-debug.apk
-```
-
-If dependency downloads fail with HTTP 429 (rate limiting through a proxy), just re-run: Gradle caches what it already fetched.
-Debug builds install as `com.personal.keyboard.debug` and can coexist with HeliBoard/FlorisBoard.
+Requirements if you do build locally: JDK 17+, Android SDK (`platforms;android-37.0`, `build-tools;36.0.0`, `ndk;28.0.13004108`), then `./gradlew assembleDebug`.
+Debug builds install as `com.personal.keyboard.debug` and can coexist with HeliBoard and FlorisBoard.
