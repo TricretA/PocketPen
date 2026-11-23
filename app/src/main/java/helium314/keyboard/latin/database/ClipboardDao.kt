@@ -27,7 +27,24 @@ class ClipboardDao private constructor(private val db: Database) {
         fun onClipInserted(position: Int)
         fun onClipsRemoved(position: Int, count: Int)
         fun onClipMoved(oldPosition: Int, newPosition: Int)
+        /** the visible list changed in a way that can't be described by single insert/remove/move operations */
+        fun onClipsChanged()
     }
+
+    enum class Tab(val accepts: (ClipboardHistoryEntry) -> Boolean) {
+        ALL({ true }),
+        RECENT({ !it.isPinned && !it.isSnippet }),
+        PINNED({ it.isPinned && !it.isSnippet }),
+        SNIPPETS({ it.isSnippet }),
+    }
+
+    /** the tab currently shown; all index based functions refer to the entries of this tab */
+    var tab = Tab.ALL
+        set(value) {
+            field = value
+            refreshShown()
+            listener?.onClipsChanged()
+        }
 
     var listener: Listener? = null
 
@@ -38,7 +55,7 @@ class ClipboardDao private constructor(private val db: Database) {
     private val cache = mutableListOf<ClipboardHistoryEntry>().apply {
         db.readableDatabase.query(
             TABLE,
-            arrayOf(COLUMN_ID, COLUMN_TIMESTAMP, COLUMN_PINNED, COLUMN_TEXT, COLUMN_FILE, COLUMN_MIME_TYPE),
+            arrayOf(COLUMN_ID, COLUMN_TIMESTAMP, COLUMN_PINNED, COLUMN_TEXT, COLUMN_FILE, COLUMN_MIME_TYPE, COLUMN_KIND),
             null,
             null,
             null,
@@ -53,10 +70,17 @@ class ClipboardDao private constructor(private val db: Database) {
                     it.getStringOrNull(3),
                     it.getStringOrNull(4),
                     it.getStringOrNull(5)?.split('§')?.filter { it.isNotEmpty() },
+                    it.getInt(6) == KIND_SNIPPET,
                 ))
             }
         }
         sort()
+    }
+
+    private var shown: List<ClipboardHistoryEntry> = cache.toList()
+
+    private fun refreshShown() {
+        shown = cache.filter { tab.accepts(it) }
     }
 
     fun addClip(timestamp: Long, pinned: Boolean, text: String) = synchronized(this) {
@@ -117,72 +141,91 @@ class ClipboardDao private constructor(private val db: Database) {
     }
 
     /** only public for restoring backups */
-    fun insertNewEntry(timestamp: Long, pinned: Boolean, text: String?, filename: String?, mimeTypes: List<String>?, context: Context?) {
-        val cv = ContentValues(5)
+    fun insertNewEntry(timestamp: Long, pinned: Boolean, text: String?, filename: String?, mimeTypes: List<String>?, context: Context?, snippet: Boolean = false) {
+        val cv = ContentValues(6)
         cv.put(COLUMN_TIMESTAMP, timestamp)
-        cv.put(COLUMN_PINNED, pinned)
+        cv.put(COLUMN_PINNED, pinned || snippet)
+        cv.put(COLUMN_KIND, if (snippet) KIND_SNIPPET else KIND_CLIP)
         cv.put(COLUMN_TEXT, text)
         cv.put(COLUMN_FILE, filename)
         // § should be a safe separator, not allowed in mime types: https://datatracker.ietf.org/doc/html/rfc6838#section-4.2
         cv.put(COLUMN_MIME_TYPE, mimeTypes?.joinToString("§"))
         val rowId = db.writableDatabase.insert(TABLE, null, cv)
 
-        val entry = ClipboardHistoryEntry(rowId, timestamp, pinned, text, filename, mimeTypes)
+        val entry = ClipboardHistoryEntry(rowId, timestamp, pinned || snippet, text, filename, mimeTypes, snippet)
         if (filename != null && context != null)
             deleteIfSizeExceeded(context.prefs())
         cache.add(entry)
         cache.sort()
-        listener?.onClipInserted(cache.indexOf(entry))
+        refreshShown()
+        val position = shown.indexOf(entry)
+        if (position >= 0) listener?.onClipInserted(position)
     }
 
     private fun updateTimestampAt(index: Int, timestamp: Long) {
         val entry = cache[index]
+        val oldPosition = shown.indexOf(entry)
         entry.timeStamp = timestamp
         cache.sort()
-        listener?.onClipMoved(index, cache.indexOf(entry))
+        refreshShown()
+        val newPosition = shown.indexOf(entry)
+        if (oldPosition >= 0 && newPosition >= 0) listener?.onClipMoved(oldPosition, newPosition)
         val cv = ContentValues(1)
         cv.put(COLUMN_TIMESTAMP, timestamp)
         db.writableDatabase.update(TABLE, cv, "$COLUMN_ID = ${entry.id}", null)
     }
 
-    fun isPinned(index: Int) = cache[index].isPinned
+    fun isPinned(index: Int) = shown[index].isPinned
 
-    fun getAt(index: Int) = cache[index]
+    /** Snippets can only be removed by swiping in the snippets tab, other pinned entries can't be swiped away. */
+    fun canRemove(index: Int): Boolean {
+        val entry = shown.getOrNull(index) ?: return false
+        return !entry.isPinned || (entry.isSnippet && tab == Tab.SNIPPETS)
+    }
+
+    fun getAt(index: Int) = shown[index]
 
     fun get(id: Long) = cache.first { it.id == id }
 
+    /** all entries, regardless of the current tab */
     fun getAll(): List<ClipboardHistoryEntry> = cache
 
-    fun count() = cache.size
+    /** number of entries in the current tab */
+    fun count() = shown.size
 
-    fun sort() = cache.sort()
+    fun sort() {
+        cache.sort()
+        refreshShown()
+    }
 
-    fun togglePinned(id: Long) = synchronized(this) {
+    /** Cycles an entry through unpinned -> pinned -> snippet -> unpinned. Returns the new state, one of [STATE_UNPINNED], [STATE_PINNED], [STATE_SNIPPET]. */
+    fun cycleKind(id: Long): Int = synchronized(this) {
         val entry = cache.first { it.id == id }
-        entry.isPinned = !entry.isPinned
-        entry.timeStamp = System.currentTimeMillis()
-        if (listener != null) {
-            val oldPos = cache.indexOf(entry)
-            cache.sort()
-            val newPos = cache.indexOf(entry)
-            listener?.onClipMoved(oldPos, newPos)
-        } else {
-            cache.sort()
+        val state = when {
+            entry.isSnippet -> { entry.isSnippet = false; entry.isPinned = false; STATE_UNPINNED }
+            entry.isPinned -> { entry.isSnippet = true; STATE_SNIPPET }
+            else -> { entry.isPinned = true; entry.timeStamp = System.currentTimeMillis(); STATE_PINNED }
         }
-        val cv = ContentValues(2)
+        cache.sort()
+        refreshShown()
+        listener?.onClipsChanged()
+        val cv = ContentValues(3)
         cv.put(COLUMN_PINNED, entry.isPinned)
+        cv.put(COLUMN_KIND, if (entry.isSnippet) KIND_SNIPPET else KIND_CLIP)
         cv.put(COLUMN_TIMESTAMP, entry.timeStamp)
         db.writableDatabase.update(TABLE, cv, "$COLUMN_ID = ${entry.id}", null)
+        state
     }
 
     // RecyclerView initiates this, so we don't call listener (or we'll get an IndexOutOfRangeException from RecyclerView)
     fun deleteClipAt(index: Int) {
-        delete(listOf(cache[index]))
+        delete(listOf(shown[index]))
     }
 
     private fun delete(entries: List<ClipboardHistoryEntry>) = synchronized(this) {
         if (entries.isEmpty()) return@synchronized
         cache.removeAll(entries)
+        refreshShown()
         db.writableDatabase.delete(TABLE, "$COLUMN_ID IN (${entries.joinToString(",") { it.id.toString() }})", null)
         entries.forEach { if (it.filename != null) File(clipFilesDir, it.filename).delete() }
     }
@@ -203,21 +246,17 @@ class ClipboardDao private constructor(private val db: Database) {
     }
 
     fun clearNonPinned() {
-        val indicesToRemove = mutableListOf<Int>()
-        cache.forEachIndexed { idx, clip ->
-            if (!clip.isPinned)
-                indicesToRemove.add(idx)
-        }
-        if (indicesToRemove.isEmpty())
-            return // nothing to remove
-        delete(cache.filter { !it.isPinned })
-        listener?.onClipsRemoved(indicesToRemove[0], indicesToRemove.size)
+        val toRemove = cache.filter { !it.isPinned }
+        if (toRemove.isEmpty()) return // nothing to remove
+        delete(toRemove)
+        listener?.onClipsChanged()
     }
 
     fun clear() {
-        if (count() == 0) return
+        if (cache.isEmpty()) return
         cache.clear()
-        listener?.onClipsRemoved(0, count())
+        refreshShown()
+        listener?.onClipsChanged()
         db.writableDatabase.delete(TABLE, null, null)
     }
 
@@ -257,6 +296,7 @@ class ClipboardDao private constructor(private val db: Database) {
         private const val COLUMN_PINNED = "PINNED"
         private const val COLUMN_TEXT = "TEXT" // we could enforce unique text, but that's only necessary if we can drop the cache (later)
         private const val COLUMN_FILE = "FILE" // path relative to files dir
+        private const val COLUMN_KIND = "KIND" // KIND_CLIP or KIND_SNIPPET
         private const val COLUMN_MIME_TYPE = "MIME_TYPE" // for files, actually a list of mime types according to clipboard description
         const val CREATE_TABLE = """
             CREATE TABLE $TABLE (
@@ -268,6 +308,12 @@ class ClipboardDao private constructor(private val db: Database) {
         """
 
         const val ADD_FILE_COLUMN = "ALTER TABLE $TABLE ADD COLUMN $COLUMN_FILE TEXT"
+        const val KIND_CLIP = 0
+        const val KIND_SNIPPET = 1
+        const val STATE_UNPINNED = 0
+        const val STATE_PINNED = 1
+        const val STATE_SNIPPET = 2
+        const val ADD_KIND_COLUMN = "ALTER TABLE $TABLE ADD COLUMN $COLUMN_KIND INTEGER NOT NULL DEFAULT 0"
         const val ADD_MIME_TYPE_COLUMN = "ALTER TABLE $TABLE ADD COLUMN $COLUMN_MIME_TYPE TEXT"
 
         private var instance: ClipboardDao? = null

@@ -8,6 +8,8 @@ import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
+import android.widget.Toast
+import helium314.keyboard.latin.database.ClipboardDao
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
@@ -103,7 +105,13 @@ class ClipboardAdapter(
         }
 
         override fun onLongClick(view: View): Boolean {
-            clipboardHistoryManager?.toggleClipPinned(view.tag as Long)
+            val state = clipboardHistoryManager?.cycleClipKind(view.tag as Long) ?: return true
+            val message = when (state) {
+                ClipboardDao.STATE_PINNED -> R.string.clipboard_state_pinned
+                ClipboardDao.STATE_SNIPPET -> R.string.clipboard_state_snippet
+                else -> R.string.clipboard_state_unpinned
+            }
+            Toast.makeText(view.context, message, Toast.LENGTH_SHORT).show()
             return true
         }
     }

@@ -84,7 +84,9 @@ HeliBoard other:
 - [x] Baseline build of unmodified fork (27 MB debug APK; Maven Central 429s need retry — see `docs/BUILDING.md`)
 - [x] Rebrand: applicationId `com.personal.keyboard`, name "MyKeys" (working name, change freely), provider authorities, APK name. Icon still HeliBoard's.
 - [x] Clipboard v2 step 1: retention presets (1h/1d/7d/30d/90d/never), default 30 days (was 10 min), pinned exempt (already was), `IS_SENSITIVE` clips no longer stored
-- [ ] Clipboard v2 step 2: custom retention, search, snippets, tabs (All/Recent/Pinned/Snippets), edit entry, DB encryption
+- [x] Clipboard v2 step 2a: tabs (All/Recent/Pinned/Snippets), snippets (DB v4 `KIND` column, protected from expiry/clear, removable by swipe only in Snippets tab), long-press cycles unpinned -> pinned -> snippet. 5 unit tests.
+- [ ] Clipboard v2 step 2b: search, edit entry, add-snippet-by-typing, custom retention period, DB encryption
+  - UI is untested on a device/emulator (none available in the build container): verify tab row height and long-press cycle on a phone.
 - [ ] Gboard-style default look + layout presets
 - [ ] AI panel (selected-text actions)
 - [ ] Voice key + preview

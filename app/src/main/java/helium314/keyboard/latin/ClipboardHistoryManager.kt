@@ -139,9 +139,12 @@ class ClipboardHistoryManager(
         }
     }
 
-    fun toggleClipPinned(id: Long) {
-        clipboardDao?.togglePinned(id)
-    }
+    /** cycles unpinned -> pinned -> snippet -> unpinned, returns one of the ClipboardDao.STATE_ constants */
+    fun cycleClipKind(id: Long) = clipboardDao?.cycleKind(id) ?: ClipboardDao.STATE_UNPINNED
+
+    var clipboardTab: ClipboardDao.Tab
+        get() = clipboardDao?.tab ?: ClipboardDao.Tab.ALL
+        set(value) { clipboardDao?.tab = value }
 
     fun clearHistory() {
         clipboardDao?.clearNonPinned()
@@ -149,7 +152,7 @@ class ClipboardHistoryManager(
         removeClipboardSuggestion()
     }
 
-    fun canRemove(index: Int) = clipboardDao?.isPinned(index) == false
+    fun canRemove(index: Int) = clipboardDao?.canRemove(index) == true
 
     fun removeEntry(index: Int) {
         if (canRemove(index))

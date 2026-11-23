@@ -55,6 +55,7 @@ class ClipboardHistoryView @JvmOverloads constructor(
     private lateinit var clipboardRecyclerView: ClipboardHistoryRecyclerView
     private lateinit var placeholderView: TextView
     private val toolbarKeys = mutableListOf<ImageButton>()
+    private val tabViews = mutableMapOf<ClipboardDao.Tab, TextView>()
     private lateinit var clipboardAdapter: ClipboardAdapter
 
     lateinit var keyboardActionListener: KeyboardActionListener
@@ -98,6 +99,25 @@ class ClipboardHistoryView @JvmOverloads constructor(
             clipboardLayoutParams.setListProperties(this)
             placeholderView = this@ClipboardHistoryView.placeholderView
         }
+        val tabs = findViewById<LinearLayout>(R.id.clipboard_tabs)
+        listOf(
+            ClipboardDao.Tab.ALL to R.string.clipboard_tab_all,
+            ClipboardDao.Tab.RECENT to R.string.clipboard_tab_recent,
+            ClipboardDao.Tab.PINNED to R.string.clipboard_tab_pinned,
+            ClipboardDao.Tab.SNIPPETS to R.string.clipboard_tab_snippets,
+        ).forEach { (tab, label) ->
+            val tabView = TextView(context).apply {
+                setText(label)
+                gravity = android.view.Gravity.CENTER
+                layoutParams = LayoutParams(0, clipboardLayoutParams.tabRowHeight, 1f)
+                setOnClickListener {
+                    clipboardHistoryManager.clipboardTab = tab
+                    updateTabs()
+                }
+            }
+            tabViews[tab] = tabView
+            tabs.addView(tabView)
+        }
         val clipboardStrip = KeyboardSwitcher.getInstance().clipboardStrip!!
         getEnabledClipboardToolbarKeys(context.prefs()).forEach {
             val key = createToolbarKey(context, it)
@@ -117,6 +137,23 @@ class ClipboardHistoryView @JvmOverloads constructor(
             itemTextColor = params.mTextColor
             itemTextSize = params.mLabelSize.toFloat()
         }
+    }
+
+    private fun updateTabs() {
+        val selected = clipboardHistoryManager.clipboardTab
+        tabViews.forEach { (tab, view) ->
+            view.alpha = if (tab == selected) 1f else 0.55f
+            view.setTypeface(view.typeface, if (tab == selected) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
+        }
+    }
+
+    private fun setupTabs(params: KeyDrawParams) {
+        tabViews.values.forEach {
+            it.setTextColor(params.mTextColor)
+            it.setTextSize(TypedValue.COMPLEX_UNIT_PX, params.mLabelSize.toFloat() * 0.8f)
+            KeyboardTypeface.applyToTextView(it)
+        }
+        updateTabs()
     }
 
     private fun setupToolbarKeys() {
@@ -157,6 +194,7 @@ class ClipboardHistoryView @JvmOverloads constructor(
         val settings = Settings.getInstance()
         KeyboardTypeface.customTypeface()?.let { params.mTypeface = it }
         setupClipKey(params)
+        setupTabs(params)
         setupBottomRowKeyboard(editorInfo, keyboardActionListener)
 
         placeholderView.apply {
@@ -233,6 +271,10 @@ class ClipboardHistoryView @JvmOverloads constructor(
 
     override fun onClipsRemoved(position: Int, count: Int) {
         clipboardAdapter.notifyItemRangeRemoved(position, count)
+    }
+
+    override fun onClipsChanged() {
+        clipboardAdapter.notifyDataSetChanged()
     }
 
     override fun onClipMoved(oldPosition: Int, newPosition: Int) {

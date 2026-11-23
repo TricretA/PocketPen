@@ -210,6 +210,13 @@
     <string name="enable_clipboard_history_summary">If disabled, clipboard key will paste clipboard content if any</string>
     <!-- Preferences item for controlling clipboard history retention time -->
     <string name="clipboard_history_retention_time">History retention time</string>
+    <string name="clipboard_tab_all">All</string>
+    <string name="clipboard_tab_recent">Recent</string>
+    <string name="clipboard_tab_pinned">Pinned</string>
+    <string name="clipboard_tab_snippets">Snippets</string>
+    <string name="clipboard_state_pinned">Pinned</string>
+    <string name="clipboard_state_snippet">Saved as snippet</string>
+    <string name="clipboard_state_unpinned">Unpinned</string>
     <string name="clipboard_retention_1_hour">1 hour</string>
     <string name="clipboard_retention_1_day">1 day</string>
     <string name="clipboard_retention_7_days">7 days</string>
