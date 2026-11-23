@@ -34,8 +34,11 @@ Pocketpen is a fork of [HeliBoard](https://github.com/Helium314/HeliBoard), whic
 **Clipboard manager**
 - Search, edit, add snippets, delete, and set a custom retention period from Settings.
 
-**Simple appearance**
-- Theme colors, day and night, key borders, key style, background image, keyboard height and font size on one short screen. Everything else is under "More appearance options".
+**Visual, minimal settings**
+- A home screen of big icon tiles and a live preview of your keyboard. No walls of text.
+- Pick a theme from keyboard thumbnails, drag height and text size, flip toggles that are just an icon and a word.
+- Pocketpen's own Paper, Ink and Signal themes, Poppins type, and a three-step visual setup instead of a text wizard.
+- Everything else from the engine is tucked under "More".
 
 **Everything HeliBoard already does**
 Suggestions and autocorrect, dictionaries, themes, custom layouts, number row, one-handed mode, emoji, and a privacy-first design with no analytics.

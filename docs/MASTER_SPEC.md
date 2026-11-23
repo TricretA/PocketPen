@@ -102,3 +102,13 @@ HeliBoard other:
 - [ ] Deferred by decision: look and layout presets, themes marketplace, GIF and stickers
 - [ ] Not doing: clipboard database encryption (would make backups unrestorable on a new phone; Android already encrypts app storage)
 - [ ] Open risk: glide typing still needs Google's proprietary library, supplied by the user
+
+## Design update
+
+- [x] Full UI redesign from the brand kit: Ink, Signal, Paper, Graphite, Mist; Poppins; keycap tiles; launcher icon from the kit
+- [x] Settings reduced to a tile home: Look, Typing, Languages, Clipboard, Voice, Write, AI, More
+- [x] Visual theme picker with live preview; new Paper, Ink and Signal keyboard themes are the defaults
+- [x] New visual onboarding replaces the HeliBoard wizard
+- [x] Startup crash fixed: debug builds no longer shrink code, WorkManager and ML Kit classes are kept
+- [x] Default toolbar trimmed to seven keys
+- [ ] Still to review on a device: keyboard toolbar look, handwriting canvas, voice panel dialogs
