@@ -46,7 +46,7 @@ jobs:
         run: |
           APK=$(ls app/build/outputs/apk/debug/*-debug*.apk | head -n 1)
           gh release delete latest --cleanup-tag --yes || true
-          gh release create latest "$APK" --prerelease --target "$GITHUB_SHA" --title "Pocketpen test build" --notes "Debug build of commit ${GITHUB_SHA::7}. Install over the previous build to update."
+          gh release create latest "$APK" --prerelease --target "$GITHUB_SHA" --title "Pocketpen beta (latest build)" --notes "Debug build of commit ${GITHUB_SHA::7}. Install over the previous build to update."
 
       - name: Archive reports for failed job
         uses: actions/upload-artifact@v4
