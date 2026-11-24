@@ -182,7 +182,7 @@ fun HandwritingScreen(onClickBack: () -> Unit) {
                         Text(message)
                         if (slow && state == 0) {
                             Spacer(androidx.compose.ui.Modifier.height(8.dp))
-                            Text(stringResource(R.string.sb_hw_slow))
+                            Text(stringResource(R.string.sb_hw_dl_slow))
                         }
                     }
                 },
