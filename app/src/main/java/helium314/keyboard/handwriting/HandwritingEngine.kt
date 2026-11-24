@@ -97,6 +97,21 @@ class HandwritingEngine(languageTag: String) {
     }
 
     companion object {
+        fun isDownloaded(tag: String, callback: (Boolean) -> Unit) {
+            val model = try {
+                DigitalInkRecognitionModelIdentifier.fromLanguageTag(tag)?.let { DigitalInkRecognitionModel.builder(it).build() }
+            } catch (e: MlKitException) {
+                null
+            }
+            if (model == null) {
+                callback(false)
+                return
+            }
+            RemoteModelManager.getInstance().isModelDownloaded(model)
+                .addOnSuccessListener { callback(it) }
+                .addOnFailureListener { callback(false) }
+        }
+
         private const val SHAPES_TAG = "zxx-Zsym-x-shapes"
     }
 }

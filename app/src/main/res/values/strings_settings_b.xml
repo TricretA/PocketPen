@@ -70,4 +70,7 @@
     <string name="sb_hw_pack_t">Download writing pack for %1$s</string>
     <string name="sb_hw_pack_d">One-time download so it works without internet</string>
     <string name="sb_hw_pack_go">Download</string>
+    <string name="sb_hw_ready">Ready ✓</string>
+    <string name="sb_hw_slow">This is taking a while. Check your internet connection, then tap Retry.</string>
+    <string name="sb_hw_retry">Retry</string>
 </resources>

@@ -1,6 +1,13 @@
 package helium314.keyboard.settings.screens
 
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -36,6 +43,10 @@ fun HandwritingScreen(onClickBack: () -> Unit) {
     val addSpace = remember(version) { HandwritingSettings.addSpace(ctx) }
     val pause = remember(version) { HandwritingSettings.pauseMs(ctx) }
     val palm = remember(version) { HandwritingSettings.palmRejection(ctx) }
+    var downloaded by remember { mutableStateOf(false) }
+    LaunchedEffect(version, dialog) {
+        HandwritingEngine.isDownloaded(HandwritingSettings.languageTag(ctx)) { downloaded = it }
+    }
     val languageName = HandwritingSettings.languages.firstOrNull { it.second == languageTag }?.first ?: languageTag
 
     PocketScreen(stringResource(R.string.pp_write), onClickBack) {
@@ -53,7 +64,10 @@ fun HandwritingScreen(onClickBack: () -> Unit) {
                 R.drawable.ic_pp_cloud,
                 { dialog = HandwritingDialog.DOWNLOAD }
             ) {
-                Text(stringResource(R.string.sb_hw_pack_go), color = helium314.keyboard.latin.utils.PP.Signal)
+                Text(
+                    stringResource(if (downloaded) R.string.sb_hw_ready else R.string.sb_hw_pack_go),
+                    color = helium314.keyboard.latin.utils.PP.Signal
+                )
             }
         }
 
@@ -124,22 +138,64 @@ fun HandwritingScreen(onClickBack: () -> Unit) {
         )
 
         HandwritingDialog.DOWNLOAD -> {
-            var status by remember { mutableStateOf<String?>(null) }
-            val engine = remember { HandwritingEngine(languageTag) }
-            DisposableEffect(Unit) {
-                status = ctx.getString(R.string.hw_preparing)
-                engine.prepare(
-                    onDownloading = { status = ctx.getString(R.string.hw_downloading) },
-                    onReady = { status = ctx.getString(R.string.hw_download_done) },
-                    onFailed = { status = it }
-                )
+            var attempt by remember { mutableIntStateOf(0) }
+            var state by remember { mutableIntStateOf(0) }
+            var message by remember { mutableStateOf("") }
+            var slow by remember { mutableStateOf(false) }
+            DisposableEffect(attempt) {
+                state = 0
+                slow = false
+                message = ctx.getString(R.string.hw_preparing)
+                val engine = HandwritingEngine(languageTag)
+                try {
+                    engine.prepare(
+                        onDownloading = { message = ctx.getString(R.string.hw_downloading) },
+                        onReady = {
+                            state = 1
+                            message = ctx.getString(R.string.hw_download_done)
+                            version++
+                        },
+                        onFailed = {
+                            state = 2
+                            message = it
+                        }
+                    )
+                } catch (e: Exception) {
+                    state = 2
+                    message = e.message ?: e.javaClass.simpleName
+                }
                 onDispose { engine.close() }
+            }
+            LaunchedEffect(attempt) {
+                delay(45000)
+                if (state == 0) slow = true
             }
             AlertDialog(
                 onDismissRequest = { dialog = null },
-                title = { Text(stringResource(R.string.sb_hw_pack_go)) },
-                text = { Text(status ?: "") },
-                confirmButton = { TextButton(onClick = { dialog = null }) { Text(stringResource(R.string.ai_close)) } }
+                title = { Text(stringResource(R.string.sb_hw_pack_t, languageName)) },
+                text = {
+                    Column {
+                        if (state == 0) {
+                            CircularProgressIndicator(color = helium314.keyboard.latin.utils.PP.Signal)
+                            Spacer(androidx.compose.ui.Modifier.height(12.dp))
+                        }
+                        Text(message)
+                        if (slow && state == 0) {
+                            Spacer(androidx.compose.ui.Modifier.height(8.dp))
+                            Text(stringResource(R.string.sb_hw_slow))
+                        }
+                    }
+                },
+                confirmButton = {
+                    if (state == 2 || (slow && state == 0))
+                        TextButton(onClick = { attempt++ }) { Text(stringResource(R.string.sb_hw_retry)) }
+                    else
+                        TextButton(onClick = { dialog = null }) { Text(stringResource(R.string.ai_close)) }
+                },
+                dismissButton = {
+                    if (state == 2 || (slow && state == 0))
+                        TextButton(onClick = { dialog = null }) { Text(stringResource(R.string.ai_close)) }
+                }
             )
         }
 
