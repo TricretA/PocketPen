@@ -158,7 +158,7 @@ class KeyboardSwitcher private constructor() {
      * If the keyboard is currently showing, theme will be reloaded immediately.  */
     fun setThemeNeedsReload() {
         themeNeedsReload = true
-        if (inputView == null || !latinIME.isInputViewShown) return  // will be reloaded right before showing IME
+        if (inputView == null || !latinIME.isInputViewShown || isShowingEmojiPalettes) return  // will be reloaded right before showing IME
 
         // Hide and show IME, showing will trigger the reload.
         // Reloading while IME is shown is glitchy, and hiding / showing is so fast the user shouldn't notice.
@@ -171,6 +171,7 @@ class KeyboardSwitcher private constructor() {
     }
 
     fun updateKeyboardTheme(displayContext: Context) {
+        if (isShowingEmojiPalettes && helium314.keyboard.keyboard.emoji.EmojiSettings.stay(displayContext)) return
         val themeUpdated = updateKeyboardThemeAndContextThemeWrapper(displayContext, getKeyboardTheme(displayContext))
         if (themeUpdated) {
             val settings = Settings.getInstance()
@@ -270,6 +271,7 @@ class KeyboardSwitcher private constructor() {
         editorInfo: EditorInfo?, settingsValues: SettingsValues, currentAutoCapsState: Int,
         currentRecapitalizeState: RecapitalizeMode?, internalAction: KeyboardLayoutSet.InternalAction?
     ) {
+        val wasEmoji = isShowingEmojiPalettes && helium314.keyboard.keyboard.emoji.EmojiSettings.stay(themeContext)
         val builder = KeyboardLayoutSet.Builder(themeContext, editorInfo, settingsValues)
         val keyboardWidth = ResourceUtils.getKeyboardWidth(themeContext, settingsValues)
         val keyboardHeight = ResourceUtils.getKeyboardHeight(themeContext.resources, settingsValues)
@@ -291,6 +293,7 @@ class KeyboardSwitcher private constructor() {
                 Log.e(TAG, "even fallback to defaults failed: ${e2.keyboardId}", e2.cause)
             }
         }
+        if (wasEmoji) setEmojiKeyboard()
     }
 
     fun onHideWindow() {

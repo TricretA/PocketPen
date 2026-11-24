@@ -171,6 +171,9 @@ public final class EmojiPageKeyboardView extends KeyboardView implements
     @Override
     public void setKeyboard(@NonNull final Keyboard keyboard) {
         super.setKeyboard(keyboard);
+        final int baseLetterSize = getKeyDrawParams().mLetterSize;
+        if (baseLetterSize > 0)
+            mFontSizeMultiplier = EmojiSettings.glyphDp(getContext()) * getResources().getDisplayMetrics().density / baseLetterSize;
         mKeyDetector.setKeyboard(keyboard, 0 /* correctionX */, 0 /* correctionY */);
         mPopupKeysKeyboardCache.clear();
         if (AccessibilityUtils.Companion.getInstance().isAccessibilityEnabled()) {

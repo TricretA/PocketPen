@@ -106,6 +106,11 @@ class ToolsPanelView(context: Context, private val host: Host) : FrameLayout(con
 
     private fun dp(value: Int) = (value * density).toInt()
 
+    private companion object {
+        const val TILE_HEIGHT = 48
+        const val PAGE_GAP = 8
+    }
+
     private fun round(color: Int, radius: Int, stroke: Int = 0, strokeColor: Int = 0) = GradientDrawable().apply {
         setColor(color)
         cornerRadius = radius.toFloat()
@@ -127,23 +132,41 @@ class ToolsPanelView(context: Context, private val host: Host) : FrameLayout(con
     private fun feedback(view: View) =
         AudioAndHapticFeedbackManager.getInstance().performHapticAndAudioFeedback(KeyCode.NOT_SPECIFIED, view, HapticEvent.KEY_PRESS)
 
-    private fun tile(icon: Drawable?, label: String, hint: String? = null, active: Boolean = false): View {
+    private fun panelIconFor(key: ToolbarKey): Drawable? {
+        val res = when (key) {
+            ToolbarKey.ONE_HANDED -> R.drawable.ic_tool_onehanded
+            ToolbarKey.FLOATING -> R.drawable.ic_tool_floating
+            ToolbarKey.HANDWRITING -> R.drawable.ic_tool_handwriting
+            ToolbarKey.AI -> R.drawable.ic_tool_ai
+            ToolbarKey.VOICE -> R.drawable.ic_tool_voice
+            ToolbarKey.EMOJI -> R.drawable.ic_tool_emoji
+            ToolbarKey.CLIPBOARD -> R.drawable.ic_tool_clipboard
+            ToolbarKey.NUMPAD -> R.drawable.ic_tool_numpad
+            ToolbarKey.SPLIT -> R.drawable.ic_tool_split
+            ToolbarKey.INCOGNITO -> R.drawable.ic_tool_incognito
+            ToolbarKey.DPAD -> R.drawable.ic_tool_text
+            else -> return iconFor(key)
+        }
+        return tinted(res)
+    }
+
+    private fun tile(icon: Drawable?, label: String, hint: String? = null, active: Boolean = false, chevron: Boolean = false): View {
         val row = LinearLayout(context)
         row.orientation = LinearLayout.HORIZONTAL
         row.gravity = Gravity.CENTER_VERTICAL
         val fill = if (active) ColorUtils.blendARGB(pillColor, accent, 0.45f) else pillColor
-        row.background = round(fill, dp(22))
-        row.setPadding(dp(12), 0, dp(10), 0)
+        row.background = round(fill, dp(TILE_HEIGHT / 2))
+        row.setPadding(dp(18), 0, dp(14), 0)
         val iconView = ImageView(context)
         iconView.setImageDrawable(icon)
-        row.addView(iconView, LinearLayout.LayoutParams(dp(20), dp(20)))
+        row.addView(iconView, LinearLayout.LayoutParams(dp(24), dp(24)))
         val texts = LinearLayout(context)
         texts.orientation = LinearLayout.VERTICAL
         texts.gravity = Gravity.CENTER_VERTICAL
         val title = TextView(context)
         title.text = label
         title.setTextColor(textColor)
-        title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+        title.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
         title.maxLines = 1
         title.ellipsize = TextUtils.TruncateAt.END
         texts.addView(title)
@@ -151,26 +174,31 @@ class ToolsPanelView(context: Context, private val host: Host) : FrameLayout(con
             val sub = TextView(context)
             sub.text = hint
             sub.setTextColor(ColorUtils.setAlphaComponent(textColor, 160))
-            sub.setTextSize(TypedValue.COMPLEX_UNIT_SP, 9f)
+            sub.setTextSize(TypedValue.COMPLEX_UNIT_SP, 10f)
             sub.maxLines = 1
             sub.ellipsize = TextUtils.TruncateAt.END
             texts.addView(sub)
         }
         val lp = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-        lp.marginStart = dp(10)
+        lp.marginStart = dp(16)
         row.addView(texts, lp)
+        if (chevron) {
+            val arrow = ImageView(context)
+            arrow.setImageDrawable(tinted(R.drawable.ic_tool_chevron, ColorUtils.setAlphaComponent(textColor, 190)))
+            row.addView(arrow, LinearLayout.LayoutParams(dp(20), dp(20)))
+        }
         return row
     }
 
     private fun tile(key: ToolbarKey): View =
-        tile(iconFor(key), labelFor(key), if (key == ToolbarKey.INCOGNITO) context.getString(R.string.tp_incognito_hint) else null)
+        tile(panelIconFor(key), labelFor(key), if (key == ToolbarKey.INCOGNITO) context.getString(R.string.tp_incognito_hint) else null)
 
     private fun specialTile(special: ToolSpecial): View = when (special) {
-        ToolSpecial.TEXT -> tile(tinted(R.drawable.ic_pp_snippet), context.getString(R.string.pp_text_editing))
-        ToolSpecial.THEME -> tile(tinted(R.drawable.ic_pp_drop), context.getString(R.string.tp_theme))
-        ToolSpecial.RESIZE -> tile(tinted(R.drawable.ic_pp_size), context.getString(R.string.tp_resize))
-        ToolSpecial.AI_MODEL -> tile(tinted(R.drawable.ic_ai), context.getString(R.string.tp_ai_model))
-        ToolSpecial.SOUND -> tile(tinted(R.drawable.ic_pp_sound), context.getString(R.string.tp_sound), null, soundOn())
+        ToolSpecial.TEXT -> tile(tinted(R.drawable.ic_tool_text), context.getString(R.string.pp_text_editing), chevron = true)
+        ToolSpecial.THEME -> tile(tinted(R.drawable.ic_tool_theme), context.getString(R.string.tp_theme), chevron = true)
+        ToolSpecial.RESIZE -> tile(tinted(R.drawable.ic_tool_resize), context.getString(R.string.tp_resize), chevron = true)
+        ToolSpecial.AI_MODEL -> tile(tinted(R.drawable.ic_tool_ai), context.getString(R.string.tp_ai_model), chevron = true)
+        ToolSpecial.SOUND -> tile(tinted(R.drawable.ic_tool_sound), context.getString(R.string.tp_sound), null, soundOn())
     }
 
     private fun soundOn() = prefs.getBoolean(Settings.PREF_SOUND_ON, Defaults.PREF_SOUND_ON)
@@ -210,16 +238,16 @@ class ToolsPanelView(context: Context, private val host: Host) : FrameLayout(con
         dots = dotsView
         bottom.addView(dotsView, FrameLayout.LayoutParams(dp(80), dp(16), Gravity.CENTER))
         val pencil = FrameLayout(context)
-        pencil.background = round(Color.TRANSPARENT, dp(16), dp(1), lineColor)
+        pencil.background = round(Color.TRANSPARENT, dp(18), dp(1), lineColor)
         val pencilIcon = ImageView(context)
         pencilIcon.setImageDrawable(tinted(R.drawable.ic_pp_edit))
         pencilIcon.scaleType = ImageView.ScaleType.CENTER
         pencil.addView(pencilIcon, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
         pencil.setOnClickListener { feedback(it); showEdit() }
-        val pencilParams = FrameLayout.LayoutParams(dp(88), dp(30), Gravity.END or Gravity.CENTER_VERTICAL)
-        pencilParams.marginEnd = dp(12)
+        val pencilParams = FrameLayout.LayoutParams(dp(110), dp(36), Gravity.END or Gravity.CENTER_VERTICAL)
+        pencilParams.marginEnd = dp(18)
         bottom.addView(pencil, pencilParams)
-        column.addView(bottom, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(36)))
+        column.addView(bottom, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(40)))
         column.addView(pager, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
 
         pager.addOnScrollListener(object : RecyclerView.OnScrollListener() {
@@ -239,8 +267,10 @@ class ToolsPanelView(context: Context, private val host: Host) : FrameLayout(con
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
             val page = LinearLayout(context)
             page.orientation = LinearLayout.VERTICAL
-            page.setPadding(dp(8), dp(4), dp(8), 0)
+            page.gravity = Gravity.CENTER_VERTICAL
+            page.setPadding(dp(18), 0, dp(18), 0)
             page.layoutParams = RecyclerView.LayoutParams(RecyclerView.LayoutParams.MATCH_PARENT, RecyclerView.LayoutParams.MATCH_PARENT)
+            page.addOnLayoutChangeListener { _, _, top, _, bottom, _, _, _, _ -> fitPage(page, bottom - top) }
             return object : RecyclerView.ViewHolder(page) {}
         }
 
@@ -254,7 +284,6 @@ class ToolsPanelView(context: Context, private val host: Host) : FrameLayout(con
                 for (c in 0..1) {
                     val item = items.getOrNull(r * 2 + c)
                     val cell = FrameLayout(context)
-                    cell.setPadding(dp(4), 0, dp(4), 0)
                     if (item != null) {
                         val view = when (item) {
                             is PanelItem.Key -> tile(item.key)
@@ -263,9 +292,29 @@ class ToolsPanelView(context: Context, private val host: Host) : FrameLayout(con
                         view.setOnClickListener { onItemClick(it, item) }
                         cell.addView(view, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
                     }
-                    row.addView(cell, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f))
+                    val cellParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
+                    if (c == 0) cellParams.marginEnd = dp(5) else cellParams.marginStart = dp(5)
+                    row.addView(cell, cellParams)
                 }
-                page.addView(row, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
+                val rowParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(TILE_HEIGHT))
+                if (r > 0) rowParams.topMargin = dp(PAGE_GAP)
+                page.addView(row, rowParams)
+            }
+        }
+    }
+
+    private fun fitPage(page: LinearLayout, height: Int) {
+        if (height <= 0 || page.childCount == 0) return
+        val rows = page.childCount
+        val gap = if (height >= dp(TILE_HEIGHT * rows + PAGE_GAP * (rows - 1))) dp(PAGE_GAP) else dp(5)
+        val tile = ((height - gap * (rows - 1)) / rows).coerceIn(dp(36), dp(TILE_HEIGHT))
+        for (i in 0 until rows) {
+            val params = page.getChildAt(i).layoutParams as LinearLayout.LayoutParams
+            val topMargin = if (i > 0) gap else 0
+            if (params.height != tile || params.topMargin != topMargin) {
+                params.height = tile
+                params.topMargin = topMargin
+                page.getChildAt(i).layoutParams = params
             }
         }
     }
@@ -332,24 +381,24 @@ class ToolsPanelView(context: Context, private val host: Host) : FrameLayout(con
         scroll.overScrollMode = OVER_SCROLL_NEVER
         val list = LinearLayout(context)
         list.orientation = LinearLayout.VERTICAL
-        list.setPadding(dp(8), dp(2), dp(8), dp(8))
+        list.setPadding(dp(14), dp(2), dp(14), dp(8))
         for (rowKeys in ToolsLayout.textPanelKeys.chunked(6)) {
             val row = LinearLayout(context)
             row.orientation = LinearLayout.HORIZONTAL
             for (i in 0 until 6) {
                 val key = rowKeys.getOrNull(i)
                 val cell = FrameLayout(context)
-                cell.setPadding(dp(3), dp(3), dp(3), dp(3))
+                cell.setPadding(dp(4), dp(4), dp(4), dp(4))
                 if (key != null) {
                     val button = FrameLayout(context)
-                    button.background = round(pillColor, dp(14))
+                    button.background = round(pillColor, dp(20))
                     val icon = ImageView(context)
                     icon.scaleType = ImageView.ScaleType.CENTER
-                    icon.setImageDrawable(iconFor(key))
+                    icon.setImageDrawable(panelIconFor(key))
                     icon.contentDescription = labelFor(key)
                     button.addView(icon, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
                     button.setOnClickListener { feedback(it); host.onToolKeep(key) }
-                    cell.addView(button, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, dp(42)))
+                    cell.addView(button, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, dp(40)))
                 }
                 row.addView(cell, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
             }
@@ -444,7 +493,7 @@ class ToolsPanelView(context: Context, private val host: Host) : FrameLayout(con
         scroll.overScrollMode = OVER_SCROLL_NEVER
         val list = LinearLayout(context)
         list.orientation = LinearLayout.VERTICAL
-        list.setPadding(dp(8), dp(2), dp(8), dp(8))
+        list.setPadding(dp(18), dp(2), dp(18), dp(8))
         val ready = AiProvider.entries.filter { AiKeyStore.hasKey(context, it) }
         if (ready.isEmpty()) {
             val message = TextView(context)
@@ -455,7 +504,7 @@ class ToolsPanelView(context: Context, private val host: Host) : FrameLayout(con
             list.addView(message)
             val open = tile(tinted(R.drawable.ic_pp_back), context.getString(R.string.tp_open_settings))
             open.setOnClickListener { feedback(it); host.onTool(ToolbarKey.SETTINGS) }
-            list.addView(open, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(42)))
+            list.addView(open, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(TILE_HEIGHT)))
         } else {
             val current = AiSettings.provider(context)
             for (provider in ready) {
@@ -463,8 +512,8 @@ class ToolsPanelView(context: Context, private val host: Host) : FrameLayout(con
                 row.orientation = LinearLayout.HORIZONTAL
                 row.gravity = Gravity.CENTER_VERTICAL
                 val selected = provider == current
-                row.background = round(if (selected) ColorUtils.blendARGB(pillColor, accent, 0.3f) else pillColor, dp(20))
-                row.setPadding(dp(10), 0, dp(12), 0)
+                row.background = round(if (selected) ColorUtils.blendARGB(pillColor, accent, 0.3f) else pillColor, dp(TILE_HEIGHT / 2))
+                row.setPadding(dp(10), 0, dp(16), 0)
                 val badge = FrameLayout(context)
                 badge.background = circle(provider.brandColor)
                 val logo = ImageView(context)
@@ -491,8 +540,8 @@ class ToolsPanelView(context: Context, private val host: Host) : FrameLayout(con
                     AiSettings.setProvider(context, provider)
                     showSub(Sub.AI_MODEL)
                 }
-                val params = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(40))
-                params.bottomMargin = dp(4)
+                val params = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(TILE_HEIGHT))
+                params.bottomMargin = dp(PAGE_GAP)
                 list.addView(row, params)
             }
             val chips = HorizontalScrollView(context)
@@ -594,17 +643,17 @@ class ToolsPanelView(context: Context, private val host: Host) : FrameLayout(con
         scroll.overScrollMode = OVER_SCROLL_NEVER
         val grid = LinearLayout(context)
         grid.orientation = LinearLayout.VERTICAL
-        grid.setPadding(dp(8), dp(2), dp(8), dp(8))
+        grid.setPadding(dp(13), dp(2), dp(13), dp(8))
         for (rowKeys in state.panel.chunked(2)) {
             val row = LinearLayout(context)
             row.orientation = LinearLayout.HORIZONTAL
             for (i in 0..1) {
                 val key = rowKeys.getOrNull(i)
                 val cell = FrameLayout(context)
-                cell.setPadding(dp(4), dp(3), dp(4), dp(3))
+                cell.setPadding(dp(5), dp(4), dp(5), dp(4))
                 if (key != null) {
                     val view = tile(key)
-                    cell.addView(view, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, dp(42)))
+                    cell.addView(view, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, dp(TILE_HEIGHT)))
                     tileViews[key] = view
                     attachDrag(view, key, false)
                 }

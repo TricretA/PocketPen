@@ -1,6 +1,15 @@
 package helium314.keyboard.settings.screens
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
+import androidx.compose.runtime.produceState
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import android.graphics.BitmapFactory
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.File
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -158,14 +167,10 @@ fun ClipboardManagerScreen(onClickBack: () -> Unit) {
                             .padding(start = 16.dp, top = 8.dp, bottom = 8.dp, end = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            painterResource(
-                                when {
-                                    entry.filename != null -> R.drawable.ic_pp_image
-                                    entry.isPinned -> R.drawable.ic_pp_pin
-                                    else -> R.drawable.ic_pp_clock
-                                }
-                            ),
+                        if (entry.filename != null) {
+                            ClipThumb(entry.filename!!)
+                        } else Icon(
+                            painterResource(if (entry.isPinned) R.drawable.ic_pp_pin else R.drawable.ic_pp_clock),
                             contentDescription = null,
                             tint = if (entry.isPinned || entry.isSnippet) PP.Signal else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(22.dp)
@@ -297,4 +302,30 @@ private fun ClipTextDialog(
         confirmButton = { TextButton(enabled = value.isNotBlank(), onClick = onSave) { Text(stringResource(R.string.ai_save)) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.ai_cancel)) } }
     )
+}
+
+
+@Composable
+private fun ClipThumb(filename: String) {
+    val bitmap by produceState<androidx.compose.ui.graphics.ImageBitmap?>(null, filename) {
+        value = withContext(Dispatchers.IO) {
+            runCatching {
+                val file = File(ClipboardDao.clipFilesDir, filename)
+                val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                BitmapFactory.decodeFile(file.absolutePath, bounds)
+                val options = BitmapFactory.Options().apply {
+                    inSampleSize = (maxOf(bounds.outWidth, bounds.outHeight) / 320).coerceAtLeast(1)
+                }
+                BitmapFactory.decodeFile(file.absolutePath, options)?.asImageBitmap()
+            }.getOrNull()
+        }
+    }
+    Box(
+        Modifier.size(88.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.surfaceVariant),
+        contentAlignment = Alignment.Center
+    ) {
+        val image = bitmap
+        if (image != null) Image(image, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+        else Icon(painterResource(R.drawable.ic_pp_image), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(28.dp))
+    }
 }

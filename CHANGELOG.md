@@ -1,3 +1,15 @@
+## Pocketpen 0.3.1
+
+### Changed
+- Tools panel redesigned to match Gboard: fixed-height pill tiles, even spacing, chevrons and outlined icons.
+- Emoji panel is much smaller by default, and Small, Medium and Large change the columns and glyph size.
+- The clipboard manager shows a thumbnail for every image.
+
+### Fixed
+- Handwriting buttons (space, delete, enter, undo, clear) work without any ink, and delete repeats when held.
+- Handwriting canvas accepts ink from the full width in landscape.
+- Several guards so the emoji panel stays open while you swipe.
+
 ## Pocketpen 0.3.0
 
 ### Added

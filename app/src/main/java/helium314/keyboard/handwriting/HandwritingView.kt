@@ -5,6 +5,8 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.Rect
+import android.os.Build
 import android.view.MotionEvent
 import android.view.View
 import com.google.mlkit.vision.digitalink.recognition.Ink
@@ -103,6 +105,12 @@ class HandwritingView(context: Context) : View(context) {
             }
         }
         return InkGeometry(strokes.size, width, height, this.height.toFloat(), closed)
+    }
+
+    override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
+        super.onLayout(changed, left, top, right, bottom)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+            systemGestureExclusionRects = listOf(Rect(0, 0, right - left, bottom - top))
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {

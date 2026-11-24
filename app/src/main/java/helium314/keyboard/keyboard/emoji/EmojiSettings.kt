@@ -9,10 +9,17 @@ object EmojiSettings {
     const val PREF_RECENTS = "pp_emoji_recents"
 
     @JvmStatic
-    fun scale(context: Context): Float = when (context.prefs().getString(PREF_SIZE, "medium")) {
-        "small" -> 0.72f
-        "large" -> 1f
-        else -> 0.84f
+    fun columnRatio(context: Context): Float = when (context.prefs().getString(PREF_SIZE, "medium")) {
+        "small" -> 1.25f
+        "large" -> 0.75f
+        else -> 1f
+    }
+
+    @JvmStatic
+    fun glyphDp(context: Context): Float = when (context.prefs().getString(PREF_SIZE, "medium")) {
+        "small" -> 20f
+        "large" -> 30f
+        else -> 25f
     }
 
     @JvmStatic
