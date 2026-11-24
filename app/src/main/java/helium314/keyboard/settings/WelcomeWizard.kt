@@ -272,5 +272,5 @@ private fun SwitchIllustration(animate: Boolean) {
 @Preview
 @Composable
 private fun Preview() {
-    WelcomeWizard({}) {}
+    WelcomeWizard({}, {})
 }
