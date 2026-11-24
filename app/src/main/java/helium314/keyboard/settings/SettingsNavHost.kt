@@ -66,6 +66,7 @@ fun SettingsNavHost(
         if (!navController.popBackStack()) onClickBack()
     }
 
+    TryKeyboardHost {
     NavHost(
         navController = navController,
         startDestination = startDestination ?: SettingsDestination.Settings,
@@ -162,6 +163,7 @@ fun SettingsNavHost(
         composable(SettingsDestination.Subtype + "{subtype}") {
             SubtypeScreen(initialSubtype = it.arguments?.getString("subtype")!!.toSettingsSubtype(), onClickBack = ::goBack)
         }
+    }
     }
     if (target.value != SettingsDestination.Settings/* && target.value != navController.currentBackStackEntry?.destination?.route*/)
         navController.navigate(route = target.value)

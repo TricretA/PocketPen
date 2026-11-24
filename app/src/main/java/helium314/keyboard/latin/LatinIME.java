@@ -1440,12 +1440,27 @@ public class LatinIME extends InputMethodService implements
         setSuggestedWords(neutralSuggestions);
         if (hasSuggestionStripView() && currentSettings.mAutoShowToolbar) {
             final int codePointBeforeCursor = mInputLogic.mConnection.getCodePointBeforeCursor();
-            if (mInputLogic.mConnection.hasSelection()
-                    || codePointBeforeCursor == Constants.NOT_A_CODE
-                    || codePointBeforeCursor == Constants.CODE_ENTER) {
+            if (!currentSettings.mSuggestionsEnabled
+                    || mInputLogic.mConnection.hasSelection()
+                    || !Character.isLetterOrDigit(codePointBeforeCursor)) {
                 mSuggestionStripView.setToolbarVisibility(true);
             }
         }
+    }
+
+    @Override
+    public void saveWord(final String word) {
+        if (word == null || word.length() < 2) return;
+        final Context appContext = getApplicationContext();
+        final java.util.Locale locale = mSettings.getCurrent().mLocale;
+        new Thread(() -> {
+            try {
+                android.provider.UserDictionary.Words.addWord(appContext, word, 250, null, locale);
+                new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> mKeyboardSwitcher.showToast(getString(R.string.pp_word_saved, word), true));
+            } catch (Exception e) {
+                Log.w(TAG, "could not save word");
+            }
+        }).start();
     }
 
     @Override

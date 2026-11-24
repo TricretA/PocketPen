@@ -58,7 +58,6 @@ fun ToolbarScreen(onClickBack: () -> Unit, onAdvanced: () -> Unit) {
     val prefs = ctx.prefs()
     var version by remember { mutableIntStateOf(0) }
     val state = remember(version) { ToolsLayout.read(prefs) }
-    val autoShow = remember(version) { prefs.getBoolean(Settings.PREF_AUTO_SHOW_TOOLBAR, true) }
     remember { KeyboardIconsSet.instance.loadIcons(ctx) }
 
     fun apply(next: ToolsState) {
@@ -146,15 +145,6 @@ fun ToolbarScreen(onClickBack: () -> Unit, onAdvanced: () -> Unit) {
             if (on) apply(state.copy(toolbar = state.toolbar - voice, pinned = voice, panel = state.panel - voice))
             else state.pinned?.let { apply(state.copy(pinned = null, panel = listOf(it) + state.panel)) }
         }
-        SwitchLine(
-            stringResource(R.string.pp_tb_idle),
-            stringResource(R.string.pp_tb_idle_sub),
-            autoShow
-        ) { on ->
-            prefs.edit { putBoolean(Settings.PREF_AUTO_SHOW_TOOLBAR, on) }
-            version++
-        }
-
         KeyCap(
             onClick = { ToolsLayout.reset(prefs); apply(ToolsLayout.read(prefs)) },
             modifier = Modifier.fillMaxWidth().height(56.dp),

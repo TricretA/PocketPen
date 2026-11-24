@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="try_hint">Type here to try the keyboard</string>
+    <string name="try_open">Try the keyboard</string>
+    <string name="try_close">Close</string>
+</resources>

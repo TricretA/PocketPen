@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="clip2_tab_recent">Recent</string>
+    <string name="clip2_tab_pinned">Pinned</string>
+    <string name="clip2_clear_confirm">Clear all?</string>
+    <string name="clip2_resize_handle">Drag to resize</string>
+</resources>

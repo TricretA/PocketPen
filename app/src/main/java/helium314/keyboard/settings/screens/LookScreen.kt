@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -44,6 +46,7 @@ import androidx.core.content.edit
 import helium314.keyboard.keyboard.KeyboardSwitcher
 import helium314.keyboard.keyboard.KeyboardTypeface
 import helium314.keyboard.latin.utils.PocketFonts
+import helium314.keyboard.latin.utils.WriteStyle
 import helium314.keyboard.latin.R
 import helium314.keyboard.latin.common.KeyShape
 import helium314.keyboard.latin.settings.Defaults
@@ -98,6 +101,7 @@ fun LookScreen(onNavigate: (String) -> Unit, onClickBack: () -> Unit) {
     var depth by remember { mutableFloatStateOf(shape.lip) }
     var more by remember { mutableStateOf(false) }
     var fontId by remember { mutableStateOf(prefs.getString(PocketFonts.PREF, "").orEmpty()) }
+    var styleId by remember { mutableStateOf(prefs.getString(WriteStyle.PREF, WriteStyle.NORMAL).orEmpty()) }
 
     fun applyTheme(name: String, auto: Boolean) {
         val night = if (auto && PocketThemes.get(name)?.dark != true) "ink" else name
@@ -197,23 +201,39 @@ fun LookScreen(onNavigate: (String) -> Unit, onClickBack: () -> Unit) {
         }
 
         SectionLabel(stringResource(R.string.fn_font))
-        Row(
-            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            FontCard(stringResource(R.string.fn_default), FontFamily.Default, fontId.isEmpty()) {
-                fontId = ""
-                prefs.edit { putString(PocketFonts.PREF, "") }
-                KeyboardTypeface.clearCache()
-                reload()
-            }
-            PocketFonts.all.forEach { entry ->
-                FontCard(entry.label, FontFamily(Font(entry.res)), fontId == entry.id) {
-                    fontId = entry.id
-                    prefs.edit { putString(PocketFonts.PREF, entry.id) }
-                    KeyboardTypeface.clearCache()
-                    reload()
+        val fontCards = listOf<Triple<String, FontFamily, String>>(
+            Triple(stringResource(R.string.fn_default), FontFamily.Default, "")
+        ) + PocketFonts.all.map { Triple(it.label, FontFamily(Font(it.res)), it.id) }
+        fontCards.chunked(3).forEach { rowCards ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                rowCards.forEach { (label, family, id) ->
+                    FontCard(label, family, fontId == id, Modifier.weight(1f)) {
+                        fontId = id
+                        prefs.edit { putString(PocketFonts.PREF, id) }
+                        KeyboardTypeface.clearCache()
+                        reload()
+                    }
                 }
+                repeat(3 - rowCards.size) { Spacer(Modifier.weight(1f)) }
+            }
+        }
+
+        SectionLabel(stringResource(R.string.ws_title))
+        Text(
+            stringResource(R.string.ws_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 6.dp)
+        )
+        WriteStyle.all.chunked(2).forEach { rowStyles ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                rowStyles.forEach { style ->
+                    StyleCard(style.label, style.transform(WriteStyle.SAMPLE), styleId == style.id, Modifier.weight(1f)) {
+                        styleId = style.id
+                        prefs.edit { putString(WriteStyle.PREF, style.id) }
+                    }
+                }
+                repeat(2 - rowStyles.size) { Spacer(Modifier.weight(1f)) }
             }
         }
 
@@ -349,11 +369,11 @@ private fun ColorDot(color: Int, selected: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-private fun FontCard(name: String, family: FontFamily, selected: Boolean, onClick: () -> Unit) {
+private fun FontCard(name: String, family: FontFamily, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
     val ring = if (selected) PP.Signal else MaterialTheme.colorScheme.outlineVariant
     Column(
-        Modifier
-            .size(112.dp, 88.dp)
+        modifier
+            .height(88.dp)
             .clip(RoundedCornerShape(20.dp))
             .background(MaterialTheme.colorScheme.surfaceContainer)
             .border(if (selected) 3.dp else 1.dp, ring, RoundedCornerShape(20.dp))
@@ -365,6 +385,35 @@ private fun FontCard(name: String, family: FontFamily, selected: Boolean, onClic
         Text(
             "Abc 123",
             fontFamily = family,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1
+        )
+        Text(
+            name,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1
+        )
+    }
+}
+
+@Composable
+private fun StyleCard(name: String, sample: String, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
+    val ring = if (selected) PP.Signal else MaterialTheme.colorScheme.outlineVariant
+    Column(
+        modifier
+            .height(76.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .border(if (selected) 3.dp else 1.dp, ring, RoundedCornerShape(20.dp))
+            .clickable(onClick = onClick)
+            .padding(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            sample,
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1

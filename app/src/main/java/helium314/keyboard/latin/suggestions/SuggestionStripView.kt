@@ -80,6 +80,7 @@ class SuggestionStripView(context: Context, attrs: AttributeSet?, defStyle: Int)
         fun removeExternalSuggestions()
         fun onSwipeDownOnToolbar()
         fun onToolsPanelToggle()
+        fun saveWord(word: String?)
     }
 
     private val moreSuggestionsContainer: View
@@ -255,10 +256,32 @@ class SuggestionStripView(context: Context, attrs: AttributeSet?, defStyle: Int)
         suggestionsStrip.layoutDirection = newLayoutDirection
     }
 
+    private val idleReturn = Runnable {
+        if (isExternalSuggestionVisible) return@Runnable
+        if (isShowingMoreSuggestionPanel) {
+            scheduleIdleReturn()
+            return@Runnable
+        }
+        if (Settings.getValues().mToolbarMode == ToolbarMode.EXPANDABLE) setToolbarVisibility(true)
+    }
+
+    private fun scheduleIdleReturn() {
+        removeCallbacks(idleReturn)
+        postDelayed(idleReturn, IDLE_RETURN_MS)
+    }
+
+    private fun updateGroupVisibility() {
+        val splitMode = Settings.getValues().mToolbarMode == ToolbarMode.SUGGESTION_STRIP
+        val show = toolbarContainer.isVisible || splitMode
+        pinnedKeys.isVisible = show
+        toolbarExpandKey.isVisible = show
+    }
+
     fun setToolbarVisibility(toolbarVisible: Boolean) {
-        pinnedKeys.isVisible = true
+        if (toolbarVisible) removeCallbacks(idleReturn)
         suggestionsStrip.isVisible = !toolbarVisible
         toolbarContainer.isVisible = toolbarVisible
+        updateGroupVisibility()
 
         if (DEBUG_SUGGESTIONS) {
             for (view in debugInfoViews) {
@@ -277,9 +300,11 @@ class SuggestionStripView(context: Context, attrs: AttributeSet?, defStyle: Int)
         )
         isExternalSuggestionVisible = false
         updateKeys()
+        if (suggestions.size > 0 && suggestions !is PunctuationSuggestions) scheduleIdleReturn()
     }
 
     fun setExternalSuggestionView(view: View?, addCloseButton: Boolean) {
+        removeCallbacks(idleReturn)
         clear()
         isExternalSuggestionVisible = true
 
@@ -331,6 +356,7 @@ class SuggestionStripView(context: Context, attrs: AttributeSet?, defStyle: Int)
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
+        removeCallbacks(idleReturn)
         dismissMoreSuggestionsPanel()
     }
 
@@ -419,30 +445,43 @@ class SuggestionStripView(context: Context, attrs: AttributeSet?, defStyle: Int)
             if (type == Dictionary.DICTIONARY_USER_TYPED || type == Dictionary.DICTIONARY_HARDCODED)
                 showIcon = false
         }
-        if (showIcon) {
-            val icon = KeyboardIconsSet.instance.getNewDrawable(KeyboardIconsSet.NAME_BIN, context)!!
-            Settings.getValues().mColors.setColor(icon, ColorType.REMOVE_SUGGESTION_ICON)
-            val w = icon.intrinsicWidth
-            val h = icon.intrinsicHeight
-            wordView.setCompoundDrawablesWithIntrinsicBounds(icon, null, null, null)
+        val colors = Settings.getValues().mColors
+        val binIcon = if (showIcon) KeyboardIconsSet.instance.getNewDrawable(KeyboardIconsSet.NAME_BIN, context)?.also {
+            colors.setColor(it, ColorType.REMOVE_SUGGESTION_ICON)
+        } else null
+        val saveIcon = if (wordView.tag is Int && wordView.text.length > 1)
+            androidx.core.content.ContextCompat.getDrawable(context, R.drawable.ic_pp_add)?.mutate()?.also {
+                colors.setColor(it, ColorType.REMOVE_SUGGESTION_ICON)
+            } else null
+        if (binIcon != null || saveIcon != null) {
+            val leftWidth = binIcon?.intrinsicWidth ?: 0
+            val rightWidth = saveIcon?.intrinsicWidth ?: 0
+            val iconHeight = maxOf(binIcon?.intrinsicHeight ?: 0, saveIcon?.intrinsicHeight ?: 0)
+            wordView.setCompoundDrawablesWithIntrinsicBounds(binIcon, null, saveIcon, null)
             wordView.ellipsize = TextUtils.TruncateAt.END
-            val downOk = AtomicBoolean(false)
+            val downZone = java.util.concurrent.atomic.AtomicInteger(0)
+            fun zoneOf(x: Float, y: Float): Int = when {
+                y <= 0 || y >= iconHeight -> 0
+                binIcon != null && x > 0 && x < leftWidth -> 1
+                saveIcon != null && x > wordView.width - rightWidth && x < wordView.width -> 2
+                else -> 0
+            }
             wordView.setOnTouchListener { _, motionEvent ->
-                if (motionEvent.action == MotionEvent.ACTION_UP && downOk.get()) {
-                    val x = motionEvent.x
-                    val y = motionEvent.y
-                    if (0 < x && x < w && 0 < y && y < h) {
-                        removeSuggestion(wordView)
+                if (motionEvent.action == MotionEvent.ACTION_UP && downZone.get() != 0) {
+                    val zone = zoneOf(motionEvent.x, motionEvent.y)
+                    if (zone == downZone.get()) {
+                        if (zone == 1) {
+                            removeSuggestion(wordView)
+                        } else {
+                            listener.saveWord(wordView.text.toString())
+                            wordView.setCompoundDrawables(null, null, null, null)
+                        }
                         wordView.cancelLongPress()
                         wordView.isPressed = false
                         return@setOnTouchListener true
                     }
                 } else if (motionEvent.action == MotionEvent.ACTION_DOWN) {
-                    val x = motionEvent.x
-                    val y = motionEvent.y
-                    if (0 < x && x < w && 0 < y && y < h) {
-                        downOk.set(true)
-                    }
+                    downZone.set(zoneOf(motionEvent.x, motionEvent.y))
                 }
                 false
             }
@@ -538,9 +577,8 @@ class SuggestionStripView(context: Context, attrs: AttributeSet?, defStyle: Int)
         val settingsValues = Settings.getValues()
 
         refreshExpandIcon()
-        toolbarExpandKey.isVisible = true
         toolbarExpandKey.setOnClickListener(this)
-        pinnedKeys.visibility = VISIBLE
+        updateGroupVisibility()
         isExternalSuggestionVisible = false
     }
 
@@ -572,6 +610,7 @@ class SuggestionStripView(context: Context, attrs: AttributeSet?, defStyle: Int)
         @JvmField
         var DEBUG_SUGGESTIONS = false
         private const val DEBUG_INFO_TEXT_SIZE_IN_DIP = 6.5f
+        private const val IDLE_RETURN_MS = 1500L
         private val TAG = SuggestionStripView::class.java.simpleName
     }
 }

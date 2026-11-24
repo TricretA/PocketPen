@@ -108,7 +108,18 @@ open class SettingsActivity : ComponentActivity(), SharedPreferences.OnSharedPre
                         !UncachedInputMethodManagerUtils.isThisImeCurrent(this, imm)
                                 || !UncachedInputMethodManagerUtils.isThisImeEnabled(this, imm)
                     ) }
-                    if (spellchecker)
+                    var showIntro by rememberSaveable {
+                        mutableStateOf(
+                            !spellchecker && (intent?.getBooleanExtra("replay_intro", false) == true
+                                    || !prefs.getBoolean("pp_intro_seen", false))
+                        )
+                    }
+                    if (showIntro)
+                        IntroSplash(onFinished = {
+                            prefs.edit().putBoolean("pp_intro_seen", true).apply()
+                            showIntro = false
+                        })
+                    else if (spellchecker)
                         Scaffold(contentWindowInsets = WindowInsets.safeDrawing) { innerPadding ->
                             Column(Modifier.padding(innerPadding)) {
                                 TopAppBar(

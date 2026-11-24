@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ws_title">Writing style</string>
+    <string name="ws_hint">Changes the letters you send, so it shows in every app</string>
+    <string name="ks_wood">Wood</string>
+    <string name="ks_glass">Glass</string>
+    <string name="ks_laser">Laser</string>
+    <string name="ks_drop">Drop</string>
+    <string name="ks_marble">Marble</string>
+    <string name="ks_blue">Mechanical blue</string>
+    <string name="ks_brown">Mechanical brown</string>
+    <string name="ks_bell">Bell</string>
+    <string name="ks_kalimba">Kalimba</string>
+    <string name="ks_water">Water drop</string>
+    <string name="ks_heartbeat">Heartbeat</string>
+    <string name="ks_tap">Tap</string>
+    <string name="ks_snap">Snap</string>
+    <string name="ks_chirp">Chirp</string>
+    <string name="ks_thock">Thock</string>
+    <string name="ks_piano">Piano</string>
+</resources>

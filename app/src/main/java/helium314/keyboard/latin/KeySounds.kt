@@ -22,6 +22,22 @@ object KeySounds {
         "pop" to R.raw.key_pop,
         "typewriter" to R.raw.key_typewriter,
         "bubble" to R.raw.key_bubble,
+        "wood" to R.raw.key_wood,
+        "glass" to R.raw.key_glass,
+        "laser" to R.raw.key_laser,
+        "drop" to R.raw.key_drop,
+        "marble" to R.raw.key_marble,
+        "blue" to R.raw.key_blue,
+        "brown" to R.raw.key_brown,
+        "bell" to R.raw.key_bell,
+        "kalimba" to R.raw.key_kalimba,
+        "water" to R.raw.key_water,
+        "heartbeat" to R.raw.key_heartbeat,
+        "tap" to R.raw.key_tap,
+        "snap" to R.raw.key_snap,
+        "chirp" to R.raw.key_chirp,
+        "thock" to R.raw.key_thock,
+        "piano" to R.raw.key_piano,
     )
 
     private var pool: SoundPool? = null

@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -63,6 +64,22 @@ private fun soundLabel(ctx: android.content.Context, choice: String): String = c
         "pop" -> R.string.sb_sound_pop
         "typewriter" -> R.string.sb_sound_typewriter
         "bubble" -> R.string.sb_sound_bubble
+        "wood" -> R.string.ks_wood
+        "glass" -> R.string.ks_glass
+        "laser" -> R.string.ks_laser
+        "drop" -> R.string.ks_drop
+        "marble" -> R.string.ks_marble
+        "blue" -> R.string.ks_blue
+        "brown" -> R.string.ks_brown
+        "bell" -> R.string.ks_bell
+        "kalimba" -> R.string.ks_kalimba
+        "water" -> R.string.ks_water
+        "heartbeat" -> R.string.ks_heartbeat
+        "tap" -> R.string.ks_tap
+        "snap" -> R.string.ks_snap
+        "chirp" -> R.string.ks_chirp
+        "thock" -> R.string.ks_thock
+        "piano" -> R.string.ks_piano
         KeySounds.CUSTOM -> R.string.sb_sound_custom
         else -> R.string.sb_sound_system
     }
@@ -206,7 +223,7 @@ private fun SoundDialog(current: String, volume: Float, onChosen: (String) -> Un
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.sb_sound_choose_t)) },
         text = {
-            Column {
+            Column(Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState())) {
                 options.forEach { option ->
                     Row(
                         Modifier

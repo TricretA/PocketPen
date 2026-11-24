@@ -13,8 +13,8 @@ android {
         applicationId = "com.pocketpen.keyboard"
         minSdk = 23
         targetSdk = 37
-        versionCode = 4301
-        versionName = "4.3-beta2"
+        versionCode = 4310
+        versionName = "0.2.0"
         ndk {
             abiFilters.clear()
             abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
@@ -29,14 +29,21 @@ android {
             keyAlias = "androiddebugkey"
             keyPassword = "android"
         }
+        create("pocketpen") {
+            storeFile = rootProject.file(System.getenv("POCKETPEN_KEYSTORE") ?: "keystore/debug.keystore")
+            storePassword = System.getenv("POCKETPEN_STORE_PASSWORD") ?: "android"
+            keyAlias = System.getenv("POCKETPEN_KEY_ALIAS") ?: "androiddebugkey"
+            keyPassword = System.getenv("POCKETPEN_KEY_PASSWORD") ?: "android"
+        }
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = true
+            isMinifyEnabled = false
             isShrinkResources = false
             isDebuggable = false
             isJniDebuggable = false
+            signingConfig = signingConfigs.getByName("pocketpen")
         }
         create("nouserlib") { // same as release, but does not allow the user to provide a library
             isMinifyEnabled = true

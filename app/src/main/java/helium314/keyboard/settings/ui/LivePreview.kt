@@ -95,13 +95,4 @@ fun LiveKeyboard(spec: LiveSpec, modifier: Modifier = Modifier, baseHeight: Int 
 
 @Composable
 fun LivePreview(modifier: Modifier = Modifier) {
-    val spec = rememberLiveSpec()
-    Column(
-        modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .padding(horizontal = 16.dp, vertical = 10.dp)
-    ) {
-        LiveKeyboard(spec, baseHeight = 104)
-    }
 }

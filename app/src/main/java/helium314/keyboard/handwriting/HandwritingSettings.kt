@@ -46,4 +46,8 @@ object HandwritingSettings {
     fun palmRejection(context: Context) = prefs(context).getBoolean("palm_rejection", true)
 
     fun setPalmRejection(context: Context, enabled: Boolean) = prefs(context).edit { putBoolean("palm_rejection", enabled) }
+
+    fun panelHeightPx(context: Context) = prefs(context).getInt("panel_height_px", 0)
+
+    fun setPanelHeightPx(context: Context, pixels: Int) = prefs(context).edit { putInt("panel_height_px", pixels) }
 }

@@ -3,15 +3,18 @@ package helium314.keyboard.handwriting
 import android.app.Dialog
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.GradientDrawable
 import android.os.Handler
 import android.os.Looper
 import android.view.Gravity
 import android.view.KeyEvent
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager
 import android.widget.Button
+import android.widget.FrameLayout
 import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -42,6 +45,12 @@ private class HandwritingPanel(private val ime: LatinIME) : HandwritingView.List
     private lateinit var statusView: TextView
     private lateinit var chipRow: LinearLayout
     private lateinit var dialog: Dialog
+    private var anchorBottom = 0
+    private var maxHeight = 0
+    private var minHeight = 0
+    private var panelHeight = 0
+    private var dragStartY = 0f
+    private var dragStartHeight = 0
 
     private val recognizeRunnable = Runnable { recognize() }
 
@@ -66,6 +75,15 @@ private class HandwritingPanel(private val ime: LatinIME) : HandwritingView.List
             setPadding(dp(12), 0, dp(12), 0)
             gravity = Gravity.CENTER_VERTICAL
         }
+        val handle = FrameLayout(context)
+        val grip = View(context).apply {
+            background = GradientDrawable().apply {
+                setColor(Color.rgb(200, 202, 206))
+                cornerRadius = dp(3).toFloat()
+            }
+        }
+        handle.addView(grip, FrameLayout.LayoutParams(dp(44), dp(5), Gravity.CENTER))
+        root.addView(handle, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(HANDLE_DP)))
         val top = LinearLayout(context).apply { orientation = LinearLayout.HORIZONTAL }
         top.addView(statusView, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT))
         top.addView(strip, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f))
@@ -97,17 +115,38 @@ private class HandwritingPanel(private val ime: LatinIME) : HandwritingView.List
         }
         val location = IntArray(2)
         anchor.getLocationOnScreen(location)
-        val extra = dp(EXTRA_TOP_DP)
+        anchorBottom = location[1] + anchor.height
+        maxHeight = anchor.height
+        minHeight = minOf(dp(MIN_HEIGHT_DP + HANDLE_DP + TOP_BAR_DP + BOTTOM_BAR_DP), maxHeight)
+        val saved = HandwritingSettings.panelHeightPx(ime)
+        panelHeight = (if (saved > 0) saved else maxHeight).coerceIn(minHeight, maxHeight)
         val window = dialog.window
         val layoutParams = window?.attributes
         layoutParams?.token = anchor.windowToken
         layoutParams?.type = WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG
         layoutParams?.gravity = Gravity.TOP or Gravity.START
         layoutParams?.x = location[0]
-        layoutParams?.y = location[1] - extra
+        layoutParams?.y = anchorBottom - panelHeight
         layoutParams?.width = anchor.width
-        layoutParams?.height = anchor.height + extra
+        layoutParams?.height = panelHeight
         window?.attributes = layoutParams
+        handle.setOnTouchListener { _, event ->
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    dragStartY = event.rawY
+                    dragStartHeight = panelHeight
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    panelHeight = (dragStartHeight - (event.rawY - dragStartY)).toInt().coerceIn(minHeight, maxHeight)
+                    val params = window?.attributes
+                    params?.y = anchorBottom - panelHeight
+                    params?.height = panelHeight
+                    window?.attributes = params
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> HandwritingSettings.setPanelHeightPx(ime, panelHeight)
+            }
+            true
+        }
         window?.setBackgroundDrawable(ColorDrawable(Color.WHITE))
         window?.clearFlags(WindowManager.LayoutParams.FLAG_DIM_BEHIND)
         window?.addFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM)
@@ -248,7 +287,8 @@ private class HandwritingPanel(private val ime: LatinIME) : HandwritingView.List
     companion object {
         private const val TOP_BAR_DP = 44
         private const val BOTTOM_BAR_DP = 48
-        private const val EXTRA_TOP_DP = 48
+        private const val HANDLE_DP = 18
+        private const val MIN_HEIGHT_DP = 140
         private const val PRE_CONTEXT_CHARS = 20
     }
 }

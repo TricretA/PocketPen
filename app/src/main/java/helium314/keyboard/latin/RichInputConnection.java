@@ -362,7 +362,11 @@ public final class RichInputConnection implements PrivateCommandPerformer {
      * @param text The text to commit. This may include styles.
      * @param newCursorPosition The new cursor position around the text.
      */
-    public void commitText(final CharSequence text, final int newCursorPosition) {
+    public void commitText(final CharSequence rawText, final int newCursorPosition) {
+        commitTextUnstyled(helium314.keyboard.latin.utils.WriteStyle.style(mParent, rawText), newCursorPosition);
+    }
+
+    public void commitTextUnstyled(final CharSequence text, final int newCursorPosition) {
         if (DEBUG_BATCH_NESTING) checkBatchEdit();
         if (DEBUG_PREVIOUS_TEXT) checkConsistencyForDebug();
         if (DebugFlags.DEBUG_ENABLED)
@@ -728,7 +732,8 @@ public final class RichInputConnection implements PrivateCommandPerformer {
 
     // return whether the text was (probably) set correctly
     // unfortunately this is necessary in some cases
-    public boolean setComposingText(final CharSequence text, final int newCursorPosition) {
+    public boolean setComposingText(final CharSequence rawText, final int newCursorPosition) {
+        final CharSequence text = helium314.keyboard.latin.utils.WriteStyle.style(mParent, rawText);
         if (DEBUG_BATCH_NESTING) checkBatchEdit();
         if (DEBUG_PREVIOUS_TEXT) checkConsistencyForDebug();
         mExpectedSelStart += text.length() - mComposingText.length();

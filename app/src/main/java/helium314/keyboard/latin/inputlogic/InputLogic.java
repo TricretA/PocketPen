@@ -2454,11 +2454,11 @@ public final class InputLogic {
             final CharSequence afterCursor = mConnection.getTextAfterCursor(1, 0);
             if (afterCursor.length() > 0 && afterCursor.charAt(0) == end) {
                 mConnection.setSelection(mConnection.getExpectedSelectionStart() - 1, mConnection.getExpectedSelectionEnd() + 1);
-                mConnection.commitText(selected, 1);
+                mConnection.commitTextUnstyled(selected, 1);
                 return;
             }
         }
-        mConnection.commitText(StringUtils.newSingleCodePointString(start) + selected + StringUtils.newSingleCodePointString(end), 1);
+        mConnection.commitTextUnstyled(StringUtils.newSingleCodePointString(start) + selected + StringUtils.newSingleCodePointString(end), 1);
     }
 
     /**
@@ -2632,7 +2632,7 @@ public final class InputLogic {
         // and use KeyEvent.KEYCODE_PASTE otherwise except for apps that are known to ignore it
         String primaryClip = mLatinIME.getClipboardHistoryManager().getPrimaryClipIfText();
         if (primaryClip != null) {
-            mConnection.commitText(primaryClip, 1);
+            mConnection.commitTextUnstyled(primaryClip, 1);
             return;
         }
         Log.d(TAG, "pasting non-text content");

@@ -59,6 +59,10 @@ class ClipboardHistoryView @JvmOverloads constructor(
     private val toolbarKeys = mutableListOf<ImageButton>()
     private val tabViews = mutableMapOf<ClipboardDao.Tab, TextView>()
     private lateinit var permissionChip: TextView
+    private lateinit var confirmChip: TextView
+    private lateinit var clearButton: ImageButton
+    private lateinit var closeButton: ImageButton
+    private var clearArmed = false
     private lateinit var clipboardAdapter: ClipboardAdapter
 
     lateinit var keyboardActionListener: KeyboardActionListener
@@ -73,16 +77,16 @@ class ClipboardHistoryView @JvmOverloads constructor(
         val keyboardViewAttr = context.obtainStyledAttributes(attrs, R.styleable.KeyboardView, defStyle, R.style.KeyboardView)
         keyBackgroundId = keyboardViewAttr.getResourceId(R.styleable.KeyboardView_keyBackground, 0)
         keyboardViewAttr.recycle()
-        fitsSystemWindows = true
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
         val res = context.resources
-        // The main keyboard expands to the entire this {@link KeyboardView}.
         val width = ResourceUtils.getKeyboardWidth(context, Settings.getValues()) + paddingLeft + paddingRight
         val height = ResourceUtils.getSecondaryKeyboardHeight(res, Settings.getValues()) + paddingTop + paddingBottom
-        setMeasuredDimension(width, height)
+        super.onMeasure(
+            MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
+            MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY)
+        )
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -108,15 +112,17 @@ class ClipboardHistoryView @JvmOverloads constructor(
         val tabs = findViewById<LinearLayout>(R.id.clipboard_tabs)
         listOf(
             ClipboardDao.Tab.ALL to R.string.clipboard_tab_all,
+            ClipboardDao.Tab.RECENT to R.string.clip2_tab_recent,
+            ClipboardDao.Tab.PINNED to R.string.clip2_tab_pinned,
             ClipboardDao.Tab.IMAGES to R.string.clipboard_tab_images,
         ).forEach { (tab, label) ->
             val tabView = TextView(context).apply {
                 setText(label)
                 gravity = android.view.Gravity.CENTER
-                val horizontal = (14 * resources.displayMetrics.density).toInt()
+                val horizontal = (11 * resources.displayMetrics.density).toInt()
                 setPadding(horizontal, 0, horizontal, 0)
                 layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, clipboardLayoutParams.tabRowHeight).apply {
-                    marginEnd = (6 * resources.displayMetrics.density).toInt()
+                    marginEnd = (4 * resources.displayMetrics.density).toInt()
                 }
                 setOnClickListener {
                     clipboardHistoryManager.clipboardTab = tab
@@ -135,16 +141,64 @@ class ClipboardHistoryView @JvmOverloads constructor(
             setOnClickListener { ScreenshotAccess.requestPermission(context) }
         }
         tabs.addView(permissionChip)
-        val clipboardStrip = KeyboardSwitcher.getInstance().clipboardStrip!!
-        getEnabledClipboardToolbarKeys(context.prefs()).forEach {
-            val key = createToolbarKey(context, it)
-            clipboardStrip.addView(key)
-            key.setOnClickListener(this@ClipboardHistoryView)
-            key.setOnLongClickListener(this@ClipboardHistoryView)
-            colors.setColor(key, ColorType.TOOL_BAR_KEY)
-            colors.setBackground(key, ColorType.STRIP_BACKGROUND)
-            toolbarKeys.add(key)
+        val spacer = View(context)
+        tabs.addView(spacer, LayoutParams(0, 1, 1f))
+        confirmChip = TextView(context).apply {
+            setText(R.string.clip2_clear_confirm)
+            gravity = android.view.Gravity.CENTER
+            val horizontal = (12 * resources.displayMetrics.density).toInt()
+            setPadding(horizontal, 0, horizontal, 0)
+            layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, clipboardLayoutParams.tabRowHeight)
+            visibility = GONE
+            setTextColor(Color.WHITE)
+            background = android.graphics.drawable.GradientDrawable().apply {
+                setColor(Color.rgb(214, 64, 40))
+                cornerRadius = 18 * resources.displayMetrics.density
+            }
+            setOnClickListener { performClear() }
         }
+        tabs.addView(confirmChip)
+        clearButton = iconButton(R.drawable.ic_pp_delete) {
+            if (clearArmed) performClear() else armClear()
+        }
+        tabs.addView(clearButton)
+        closeButton = iconButton(R.drawable.ic_pp_close) {
+            keyboardActionListener.onCodeInput(KeyCode.CLIPBOARD, Constants.NOT_A_COORDINATE, Constants.NOT_A_COORDINATE, false)
+        }
+        tabs.addView(closeButton)
+    }
+
+    private fun iconButton(icon: Int, onClick: () -> Unit) = ImageButton(context).apply {
+        setImageResource(icon)
+        scaleType = android.widget.ImageView.ScaleType.CENTER
+        background = null
+        val size = clipboardLayoutParams.tabRowHeight
+        layoutParams = LayoutParams(size, size)
+        setOnClickListener {
+            keyboardActionListener.onPressKey(KeyCode.NOT_SPECIFIED, 0, 1, HapticEvent.KEY_PRESS)
+            onClick()
+        }
+    }
+
+    private fun armClear() {
+        clearArmed = true
+        confirmChip.visibility = VISIBLE
+        clearButton.setColorFilter(Color.rgb(214, 64, 40))
+        removeCallbacks(disarmClear)
+        postDelayed(disarmClear, 3000)
+    }
+
+    private val disarmClear = Runnable {
+        clearArmed = false
+        if (this::confirmChip.isInitialized) confirmChip.visibility = GONE
+        if (this::clearButton.isInitialized) clearButton.setColorFilter(Settings.getValues().mColors.get(ColorType.KEY_TEXT))
+    }
+
+    private fun performClear() {
+        removeCallbacks(disarmClear)
+        disarmClear.run()
+        clipboardHistoryManager.clearHistory()
+        clipboardAdapter.refresh()
     }
 
     private fun setupClipKey(params: KeyDrawParams) {
@@ -177,6 +231,9 @@ class ClipboardHistoryView @JvmOverloads constructor(
     }
 
     private fun setupTabs(params: KeyDrawParams) {
+        clearButton.setColorFilter(params.mTextColor)
+        closeButton.setColorFilter(params.mTextColor)
+        confirmChip.setTextSize(TypedValue.COMPLEX_UNIT_PX, params.mLabelSize.toFloat() * 0.8f)
         permissionChip.setTextColor(Color.rgb(18, 20, 27))
         permissionChip.setTextSize(TypedValue.COMPLEX_UNIT_PX, params.mLabelSize.toFloat() * 0.8f)
         tabViews.values.forEach {

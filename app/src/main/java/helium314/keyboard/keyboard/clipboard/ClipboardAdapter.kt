@@ -76,12 +76,13 @@ class ClipboardAdapter(
         val recent = entries.filter { !it.isPinned }
         val pinned = entries.filter { it.isPinned }
         val list = mutableListOf<Row>()
+        val grouped = manager?.clipboardTab == ClipboardDao.Tab.ALL
         if (recent.isNotEmpty()) {
-            list.add(Row.Header(R.string.clipboard_section_recent, recent.size))
+            if (grouped) list.add(Row.Header(R.string.clipboard_section_recent, recent.size))
             recent.forEach { list.add(Row.Item(it)) }
         }
         if (pinned.isNotEmpty()) {
-            list.add(Row.Header(R.string.clipboard_section_pinned, pinned.size))
+            if (grouped) list.add(Row.Header(R.string.clipboard_section_pinned, pinned.size))
             pinned.forEach { list.add(Row.Item(it)) }
         }
         rows = list
@@ -90,7 +91,8 @@ class ClipboardAdapter(
 
     fun spanSize(position: Int): Int {
         val row = rows.getOrNull(position) ?: return SPAN_COUNT
-        return if (row is Row.Item && row.entry.filename != null) IMAGE_SPAN else SPAN_COUNT
+        if (row is Row.Item) return if (row.entry.filename != null) IMAGE_SPAN else TEXT_SPAN
+        return SPAN_COUNT
     }
 
     override fun getItemCount() = rows.size
@@ -151,9 +153,9 @@ class ClipboardAdapter(
                 val row = LinearLayout(context)
                 row.orientation = LinearLayout.HORIZONTAL
                 row.gravity = Gravity.CENTER_VERTICAL
-                row.minimumHeight = dp(context, 46)
+                row.minimumHeight = dp(context, 64)
                 row.background = rounded(colors.get(ColorType.KEY_BACKGROUND), dp(context, 16).toFloat())
-                row.setPadding(dp(context, 14), dp(context, 10), dp(context, 14), dp(context, 10))
+                row.setPadding(dp(context, 12), dp(context, 10), dp(context, 12), dp(context, 10))
                 val pin = ImageView(context)
                 pin.setImageResource(pinnedIconResId)
                 colors.setColor(pin, ColorType.CLIPBOARD_PIN)
@@ -164,7 +166,7 @@ class ClipboardAdapter(
                 text.typeface = itemTypeFace
                 text.setTextColor(colors.get(ColorType.KEY_TEXT))
                 text.setTextSize(TypedValue.COMPLEX_UNIT_PX, itemTextSize * 0.82f)
-                text.maxLines = 3
+                text.maxLines = 4
                 text.ellipsize = android.text.TextUtils.TruncateAt.END
                 row.addView(text, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
                 val params = RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
@@ -284,6 +286,7 @@ class ClipboardAdapter(
     companion object {
         const val SPAN_COUNT = 6
         private const val IMAGE_SPAN = 2
+        private const val TEXT_SPAN = 3
         private const val TYPE_HEADER = 0
         private const val TYPE_TEXT = 1
         private const val TYPE_IMAGE = 2
