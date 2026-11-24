@@ -103,7 +103,7 @@ fun AboutScreen(
                 stringResource(R.string.sc_source),
                 stringResource(R.string.sc_source_sub),
                 R.drawable.ic_settings_about_github,
-                { openUrl("https://github.com/TricretA/TriKey") }
+                { openUrl("https://github.com/TricretA/pocketpen") }
             ) {}
         }
         ScCollapsible(stringResource(R.string.sc_licenses), stringResource(R.string.sc_licenses_sub), R.drawable.ic_settings_about_license) {

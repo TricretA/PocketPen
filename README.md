@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="../../releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/TricretA/TriKey?include_prereleases&color=F04A0C&label=release"></a>
+  <a href="../../releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/TricretA/pocketpen?include_prereleases&color=F04A0C&label=release"></a>
   <img alt="Android 6.0+" src="https://img.shields.io/badge/Android-6.0%2B-12141B">
   <a href="LICENSE"><img alt="License GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-3B404C"></a>
   <img alt="Status beta" src="https://img.shields.io/badge/status-beta-F04A0C">
