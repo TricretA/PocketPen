@@ -4,6 +4,11 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag, for example v0.2.0'
+        required: true
 
 permissions:
   contents: write
@@ -32,10 +37,10 @@ jobs:
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
+          TAG: ${{ inputs.tag || github.ref_name }}
         run: |
           APK=$(ls app/build/outputs/apk/release/*.apk | head -1)
           cp "$APK" "Pocketpen-${TAG}.apk"
           sha256sum "Pocketpen-${TAG}.apk" > "Pocketpen-${TAG}.apk.sha256"
           gh release delete "$TAG" --yes || true
-          gh release create "$TAG" "Pocketpen-${TAG}.apk" "Pocketpen-${TAG}.apk.sha256" --title "Pocketpen ${TAG#v}" --generate-notes --notes-file CHANGELOG.md
+          gh release create "$TAG" "Pocketpen-${TAG}.apk" "Pocketpen-${TAG}.apk.sha256" --target "$GITHUB_SHA" --title "Pocketpen ${TAG#v}" --generate-notes --notes-file CHANGELOG.md
