@@ -1,16 +1,18 @@
-## Pocketpen 0.2.0
-
-First official release.
+## Pocketpen 0.3.0
 
 ### Added
-- Clipboard that remembers: persistent history, pinned items, images, instant screenshot capture.
-- AI writing assistant with Claude, ChatGPT, OpenRouter, Groq and NVIDIA.
-- Voice typing with Groq Whisper or the built-in recognizer, shown directly in the toolbar.
-- Handwriting input with on-device recognition.
-- Gboard-style toolbar and tools panel with drag-and-drop customization.
-- 21 themes, key border and shape controls, bundled fonts, writing styles and key sounds.
-- Simplified settings with title, description and switch rows.
+- Toolbar and word suggestions now switch automatically and fully: the toolbar when idle, suggestions while typing.
+- Tools panel rebuilt: smaller tiles, a Text editing sub-panel, quick Theme, Resize, AI model and key sound tools, and a snap line when you drag tools in edit mode.
+- Long-press the mic to choose Whisper or the built-in recognizer.
+- Voice typing status shows directly in the toolbar, with no pop-up.
+- Clipboard: Recent, Pinned and Images tabs, two-column text cards, and a bottom row that clears the navigation bar.
+- Handwriting canvas can be resized and no longer covers the message box.
+- Writing styles that change what you send (bold, script, fraktur and more), 33 fonts and 20 more click sounds.
+- A real keyboard button in settings to try changes live.
+- Animated logo on first launch and on the About page, credits, a support link and update checks from GitHub.
+- Emoji settings, a smaller default emoji size and a stable emoji panel.
 
-### Notes
-- Installs as `com.pocketpen.keyboard`, separate from earlier debug builds.
-- This build is signed with the project's public development key. Do not rely on the signature as proof of origin.
+### Fixed
+- Typing switches (emoji suggestions, next word, fix typos, auto capitals) now take effect right away.
+- Tools panel edit button no longer hides behind the navigation bar.
+- Handwriting pack download shows progress, errors and a retry option.
