@@ -74,6 +74,7 @@ fun HomeScreen(onNavigate: (String) -> Unit, onClickBack: () -> Unit) {
             Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(bottom = 28.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            helium314.keyboard.settings.ui.UpdateBanner()
             LiveKeyboard(
                 spec = rememberLiveSpec(),
                 baseHeight = 150,

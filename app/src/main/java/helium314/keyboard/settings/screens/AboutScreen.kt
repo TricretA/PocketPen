@@ -76,11 +76,7 @@ fun AboutScreen(
             Modifier.fillMaxWidth().padding(vertical = 18.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            androidx.compose.foundation.Image(
-                painterResource(R.drawable.pp_logo_colour),
-                contentDescription = null,
-                modifier = Modifier.size(96.dp)
-            )
+            helium314.keyboard.settings.ui.AboutLogo()
             androidx.compose.foundation.layout.Spacer(Modifier.height(12.dp))
             androidx.compose.material3.Text(
                 "Pocketpen",
@@ -98,12 +94,35 @@ fun AboutScreen(
                 color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+        helium314.keyboard.settings.ui.UpdateSection()
         SettingsCard {
+            SettingsRow(
+                stringResource(R.string.ab_made_t),
+                stringResource(R.string.ab_made_d),
+                R.drawable.ic_pp_edit,
+                { openUrl("https://github.com/TricretA") }
+            ) {}
+            RowDivider()
+            SettingsRow(
+                stringResource(R.string.ab_support_t),
+                stringResource(R.string.ab_support_d),
+                R.drawable.ic_pp_star,
+                { openUrl("https://www.paypal.com/donate/?business=tricreta%40gmail.com&currency_code=USD&item_name=Support+Pocketpen") }
+            ) {}
+            RowDivider()
             SettingsRow(
                 stringResource(R.string.sc_source),
                 stringResource(R.string.sc_source_sub),
                 R.drawable.ic_settings_about_github,
                 { openUrl("https://github.com/TricretA/pocketpen") }
+            ) {}
+        }
+        SettingsCard {
+            SettingsRow(
+                stringResource(R.string.ab_thanks_t),
+                stringResource(R.string.ab_thanks_d),
+                R.drawable.ic_settings_about_license,
+                { openUrl(Links.GITHUB) }
             ) {}
         }
         ScCollapsible(stringResource(R.string.sc_licenses), stringResource(R.string.sc_licenses_sub), R.drawable.ic_settings_about_license) {

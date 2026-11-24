@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="up_available">Update available</string>
+    <string name="up_available_sub">Pocketpen %1$s is ready to install</string>
+    <string name="up_install">Install</string>
+    <string name="up_title">App updates</string>
+    <string name="up_check">Check</string>
+    <string name="up_checking">Checking…</string>
+    <string name="up_idle">Tap Check to look for a new version</string>
+    <string name="up_latest">You have the latest version (%1$s)</string>
+    <string name="up_failed">Could not reach the update server</string>
+    <string name="up_debug">Updates are for the official release build</string>
+    <string name="up_auto_t">Check automatically</string>
+    <string name="up_auto_d">Looks for a new version when you open the app</string>
+    <string name="ab_made_t">Made by TricretA</string>
+    <string name="ab_made_d">Designed and built by one developer. Thank you for using Pocketpen.</string>
+    <string name="ab_support_t">Support Pocketpen</string>
+    <string name="ab_support_d">Enjoying it? A small PayPal donation keeps it going.</string>
+    <string name="ab_thanks_t">With thanks</string>
+    <string name="ab_thanks_d">HeliBoard and the open-source community, whose work Pocketpen stands on.</string>
+</resources>
