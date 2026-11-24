@@ -19,7 +19,7 @@ object AiClient {
     private const val CONNECT_TIMEOUT_MS = 15_000
     private const val READ_TIMEOUT_MS = 90_000
     private val thinkBlock = Regex("<think>[\\s\\S]*?</think>")
-    private val nonChatModel = Regex("embed|whisper|tts|dall-e|moderation|image|audio|realtime|transcribe|guard|safety|rerank|clip|vlm-embed|detector")
+    private val nonChatModel = Regex("embed|whisper|tts|dall-e|moderation|image|audio|realtime|transcribe|guard|safety|rerank|clip|vlm-embed|detector|veo|imagen|aqa|live")
 
     fun complete(provider: AiProvider, apiKey: String, model: String, system: String, user: String): String {
         val body = JSONObject().put("model", model)
@@ -60,7 +60,7 @@ object AiClient {
     fun parseModels(response: JSONObject): List<String> {
         val data = response.optJSONArray("data") ?: return emptyList()
         return (0 until data.length())
-            .mapNotNull { data.optJSONObject(it)?.optString("id")?.takeIf { id -> id.isNotEmpty() } }
+            .mapNotNull { data.optJSONObject(it)?.optString("id")?.removePrefix("models/")?.takeIf { id -> id.isNotEmpty() } }
             .filterNot { nonChatModel.containsMatchIn(it.lowercase()) }
             .sorted()
     }

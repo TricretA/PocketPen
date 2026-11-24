@@ -949,6 +949,7 @@ public class LatinIME extends InputMethodService implements
     void onFinishInputViewInternal(final boolean finishingInput) {
         super.onFinishInputView(finishingInput);
         Log.i(TAG, "onFinishInputView");
+        helium314.keyboard.ai.AiInstructionMode.cancel();
         cleanupInternalStateForFinishInput();
     }
 
@@ -1033,6 +1034,7 @@ public class LatinIME extends InputMethodService implements
         if (hasSuggestionStripView() && mSettings.getCurrent().mToolbarMode == ToolbarMode.EXPANDABLE)
             mSuggestionStripView.setToolbarVisibility(false);
         mKeyboardSwitcher.onHideWindow();
+        helium314.keyboard.ai.AiInstructionMode.cancel();
 
         if (TRACE) Debug.stopMethodTracing();
         if (isShowingOptionDialog()) {
@@ -1282,6 +1284,11 @@ public class LatinIME extends InputMethodService implements
     // This method is public for testability of LatinIME, but also in the future it should
     // completely replace #onCodeInput.
     public void onEvent(@NonNull final Event event) {
+        if (helium314.keyboard.ai.AiInstructionMode.isActive()) {
+            helium314.keyboard.ai.AiInstructionMode.onEvent(this, event);
+            mKeyboardSwitcher.onEvent(event, getCurrentAutoCapsState(), getCurrentRecapitalizeState());
+            return;
+        }
         if (KeyCode.VOICE_INPUT == event.getKeyCode() && !VoiceLauncher.handle(this)) {
             mRichImm.switchToShortcutIme(this);
         }
@@ -1293,6 +1300,10 @@ public class LatinIME extends InputMethodService implements
 
     public void onTextInput(@Nullable String rawText) {
         if (rawText == null) return;
+        if (helium314.keyboard.ai.AiInstructionMode.isActive()) {
+            helium314.keyboard.ai.AiInstructionMode.onText(rawText);
+            return;
+        }
         // TODO: have the keyboard pass the correct key code when we need it.
         Event event = Event.createSoftwareTextEvent(rawText, KeyCode.MULTIPLE_CODE_POINTS, null);
         InputTransaction completeInputTransaction = mInputLogic.onTextInput(mSettings.getCurrent(),

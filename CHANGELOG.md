@@ -1,3 +1,11 @@
+## Pocketpen 0.3.2
+
+### Added
+- Gemini, Mistral, DeepSeek, Grok (xAI) and Cerebras as AI providers, each with a logo.
+
+### Fixed
+- Tell AI now works inside the keyboard: type your instruction in the toolbar bar and the result appears in place, with no jump to another app.
+
 ## Pocketpen 0.3.1
 
 ### Changed

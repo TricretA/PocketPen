@@ -33,6 +33,11 @@ class AiClientTest {
         assertEquals(listOf("a/chat-a", "z/chat-b"), AiClient.parseModels(json))
     }
 
+    @Test fun geminiModelIdsLoseTheModelsPrefix() {
+        val json = JSONObject("""{"data":[{"id":"models/gemini-2.5-flash"},{"id":"models/text-embedding-004"},{"id":"models/gemini-2.5-pro"}]}""")
+        assertEquals(listOf("gemini-2.5-flash", "gemini-2.5-pro"), AiClient.parseModels(json))
+    }
+
     @Test fun errorMessagesAreReadableForCommonShapes() {
         assertContains(AiClient.errorMessage(401, ""), "rejected")
         assertEquals("HTTP 400: bad model", AiClient.errorMessage(400, """{"type":"error","error":{"type":"x","message":"bad model"}}"""))

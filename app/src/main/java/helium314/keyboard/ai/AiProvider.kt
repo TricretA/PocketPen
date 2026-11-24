@@ -24,6 +24,11 @@ enum class AiProvider(
         R.drawable.ic_logo_openai, 0xFF10A37F.toInt(),
         listOf("gpt-5-mini")
     ),
+    GEMINI(
+        "gemini", "Gemini", "https://generativelanguage.googleapis.com/v1beta/openai", AiApiStyle.OPENAI, "gemini-flash-latest",
+        R.drawable.ic_logo_gemini, 0xFF4285F4.toInt(),
+        listOf("gemini-flash-latest", "gemini-2.5-flash", "gemini-2.5-pro")
+    ),
     OPENROUTER(
         "openrouter", "OpenRouter", "https://openrouter.ai/api/v1", AiApiStyle.OPENAI, "openai/gpt-5-mini",
         R.drawable.ic_logo_openrouter, 0xFF6467F2.toInt(),
@@ -38,6 +43,26 @@ enum class AiProvider(
         "nvidia", "NVIDIA", "https://integrate.api.nvidia.com/v1", AiApiStyle.OPENAI, "google/gemma-4-31b-it",
         R.drawable.ic_logo_nvidia, 0xFF76B900.toInt(),
         listOf("google/gemma-4-31b-it")
+    ),
+    MISTRAL(
+        "mistral", "Mistral", "https://api.mistral.ai/v1", AiApiStyle.OPENAI, "mistral-small-latest",
+        R.drawable.ic_logo_mistral, 0xFFFA520F.toInt(),
+        listOf("mistral-small-latest", "mistral-large-latest")
+    ),
+    DEEPSEEK(
+        "deepseek", "DeepSeek", "https://api.deepseek.com", AiApiStyle.OPENAI, "deepseek-chat",
+        R.drawable.ic_logo_deepseek, 0xFF4D6BFE.toInt(),
+        listOf("deepseek-chat", "deepseek-reasoner")
+    ),
+    XAI(
+        "xai", "Grok", "https://api.x.ai/v1", AiApiStyle.OPENAI, "grok-3-mini",
+        R.drawable.ic_logo_xai, 0xFF2B2B2B.toInt(),
+        listOf("grok-3-mini", "grok-4")
+    ),
+    CEREBRAS(
+        "cerebras", "Cerebras", "https://api.cerebras.ai/v1", AiApiStyle.OPENAI, "gpt-oss-120b",
+        R.drawable.ic_logo_cerebras, 0xFFF15A29.toInt(),
+        listOf("gpt-oss-120b")
     );
 
     companion object {
