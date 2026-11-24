@@ -31,7 +31,12 @@ jobs:
         run: chmod +x gradlew
 
       - name: Render screens
-        run: ./gradlew testDebugUnitTest --tests 'helium314.keyboard.ScreenshotTest'
+        run: |
+          for attempt in 1 2 3 4; do
+            ./gradlew testDebugUnitTest --tests 'helium314.keyboard.ScreenshotTest' --max-workers=2 && break
+            if ls app/build/test-results/testDebugUnitTest/*.xml >/dev/null 2>&1; then break; fi
+            sleep 45
+          done
         continue-on-error: true
 
       - name: Publish screenshots and reports
@@ -42,4 +47,5 @@ jobs:
           gh release view screens >/dev/null 2>&1 || gh release create screens --prerelease --title "Screens" --notes "Rendered screens, replaced on every push."
           mkdir -p app/build/screens
           cp app/build/test-results/testDebugUnitTest/TEST-helium314.keyboard.ScreenshotTest.xml app/build/screens/report.xml || true
+          ls app/build/screens
           gh release upload screens app/build/screens/* --clobber
