@@ -3,6 +3,7 @@
 buildscript {
     val kotlinVersion = "2.4.0"
     repositories {
+        maven { url = uri("https://maven-central.storage-download.googleapis.com/maven2/") }
         mavenCentral()
         google()
     }
@@ -18,6 +19,7 @@ buildscript {
 allprojects {
     repositories {
         google()
+        maven { url = uri("https://maven-central.storage-download.googleapis.com/maven2/") }
         mavenCentral()
         maven { url = uri("https://jitpack.io") }
     }
