@@ -7,6 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import helium314.keyboard.latin.utils.Theme
+import helium314.keyboard.settings.WelcomeWizard
 import helium314.keyboard.settings.screens.AiScreen
 import helium314.keyboard.settings.screens.ClipboardManagerScreen
 import helium314.keyboard.settings.screens.HandwritingScreen
@@ -47,6 +48,9 @@ class ScreenshotTest {
         File(dir, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
     }
 
+    @Test fun onboarding0() = shoot("onboarding0") { WelcomeWizard({}, {}, startStep = 0, animate = false) }
+    @Test fun onboarding1() = shoot("onboarding1") { WelcomeWizard({}, {}, startStep = 1, animate = false) }
+    @Test fun onboarding2() = shoot("onboarding2") { WelcomeWizard({}, {}, startStep = 2, animate = false) }
     @Test fun baseline() = shoot("baseline") { androidx.compose.material3.Text("hello") }
     @Test fun home() = shoot("home") { HomeScreen({}, {}) }
     @Test fun homeDark() = shoot("home_dark", dark = true) { HomeScreen({}, {}) }

@@ -86,7 +86,9 @@ private val lookChoices = listOf(
 @Composable
 fun WelcomeWizard(
     close: () -> Unit,
-    finish: () -> Unit
+    finish: () -> Unit,
+    startStep: Int? = null,
+    animate: Boolean = true
 ) {
     val ctx = LocalContext.current
     val imm = ctx.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
@@ -95,10 +97,10 @@ fun WelcomeWizard(
         !UncachedInputMethodManagerUtils.isThisImeCurrent(ctx, imm) -> 1
         else -> 2
     }
-    var step by rememberSaveable { mutableIntStateOf(determineStep()) }
+    var step by rememberSaveable { mutableIntStateOf(startStep ?: determineStep()) }
     val scope = rememberCoroutineScope { Dispatchers.IO }
     LaunchedEffect(step) {
-        if (step == 1)
+        if (step == 1 && startStep == null)
             scope.launch {
                 while (step == 1 && !UncachedInputMethodManagerUtils.isThisImeCurrent(ctx, imm)) {
                     delay(50)
@@ -133,8 +135,8 @@ fun WelcomeWizard(
             }
             Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                 when (step) {
-                    0 -> ToggleIllustration()
-                    1 -> SwitchIllustration()
+                    0 -> ToggleIllustration(animate)
+                    1 -> SwitchIllustration(animate)
                     else -> Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                         TileRows(columns = 3, count = lookChoices.size, spacing = 12.dp) { i ->
                             val (id, label) = lookChoices[i]
@@ -196,14 +198,17 @@ fun WelcomeWizard(
 }
 
 @Composable
-private fun ToggleIllustration() {
-    val transition = rememberInfiniteTransition(label = "toggle")
-    val t by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(1100), RepeatMode.Reverse),
-        label = "knob"
-    )
+private fun ToggleIllustration(animate: Boolean) {
+    val t = if (animate) {
+        val transition = rememberInfiniteTransition(label = "toggle")
+        val animated by transition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(tween(1100), RepeatMode.Reverse),
+            label = "knob"
+        )
+        animated
+    } else 1f
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(28.dp)) {
         Image(painterResource(R.drawable.pp_mark), contentDescription = null, modifier = Modifier.size(132.dp))
         Row(
@@ -228,14 +233,17 @@ private fun ToggleIllustration() {
 }
 
 @Composable
-private fun SwitchIllustration() {
-    val transition = rememberInfiniteTransition(label = "bob")
-    val t by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(900), RepeatMode.Reverse),
-        label = "bob"
-    )
+private fun SwitchIllustration(animate: Boolean) {
+    val t = if (animate) {
+        val transition = rememberInfiniteTransition(label = "bob")
+        val animated by transition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(tween(900), RepeatMode.Reverse),
+            label = "bob"
+        )
+        animated
+    } else 0.5f
     Box(contentAlignment = Alignment.TopEnd) {
         KeyboardPreview(
             colors = previewColorsFor("paper"),

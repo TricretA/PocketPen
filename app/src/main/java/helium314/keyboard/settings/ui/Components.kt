@@ -46,6 +46,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -142,9 +143,15 @@ fun KeyCap(
 
 @Composable
 fun ToggleTile(label: String, icon: Int, checked: Boolean, onToggle: (Boolean) -> Unit, modifier: Modifier = Modifier) {
-    val fill = if (checked) PP.Signal else MaterialTheme.colorScheme.surfaceContainer
-    val foreground = if (checked) PP.Ink else MaterialTheme.colorScheme.onSurfaceVariant
-    val lip = if (checked) SignalLip else MaterialTheme.colorScheme.outlineVariant
+    val darkMode = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val fill = when {
+        !checked -> MaterialTheme.colorScheme.surfaceContainer
+        darkMode -> Color(0xFF3A1708)
+        else -> PP.SignalSoft
+    }
+    val foreground = if (checked) PP.Signal else MaterialTheme.colorScheme.onSurfaceVariant
+    val labelColor = if (checked) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+    val lip = if (checked) PP.Signal else MaterialTheme.colorScheme.outlineVariant
     KeyCap(
         onClick = { onToggle(!checked) },
         modifier = modifier.height(108.dp),
@@ -162,7 +169,7 @@ fun ToggleTile(label: String, icon: Int, checked: Boolean, onToggle: (Boolean) -
             Text(
                 label,
                 style = MaterialTheme.typography.labelLarge,
-                color = foreground,
+                color = labelColor,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center

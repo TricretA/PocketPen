@@ -129,7 +129,15 @@ fun ClipboardManagerScreen(onClickBack: () -> Unit) {
                 onSelect = { tab = it }
             )
             if (entries.isEmpty()) {
-                Text(stringResource(R.string.pp_empty), color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(8.dp))
+                Column(Modifier.fillMaxWidth().padding(vertical = 40.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        painterResource(R.drawable.sym_keyboard_clipboard_lxx),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.outlineVariant,
+                        modifier = Modifier.size(72.dp)
+                    )
+                    Text(stringResource(R.string.pp_empty), color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 12.dp))
+                }
             }
             LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 items(entries, key = { it.id }) { entry ->
