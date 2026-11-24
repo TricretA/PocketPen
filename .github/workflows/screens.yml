@@ -34,10 +34,12 @@ jobs:
         run: ./gradlew testDebugUnitTest --tests 'helium314.keyboard.ScreenshotTest'
         continue-on-error: true
 
-      - name: Publish screenshots
+      - name: Publish screenshots and reports
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          ls app/build/screens || exit 0
           gh release view screens >/dev/null 2>&1 || gh release create screens --prerelease --title "Screens" --notes "Rendered screens, replaced on every push."
-          gh release upload screens app/build/screens/*.png --clobber
+          mkdir -p app/build/screens
+          cp app/build/test-results/testDebugUnitTest/TEST-helium314.keyboard.ScreenshotTest.xml app/build/screens/report.xml || true
+          gh release upload screens app/build/screens/* --clobber

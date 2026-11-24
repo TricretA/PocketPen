@@ -38,6 +38,7 @@ class ScreenshotTest {
         File(dir, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
     }
 
+    @Test fun baseline() = shoot("baseline") { androidx.compose.material3.Text("hello") }
     @Test fun home() = shoot("home") { HomeScreen({}, {}) }
     @Test fun homeDark() = shoot("home_dark", dark = true) { HomeScreen({}, {}) }
     @Test fun look() = shoot("look") { LookScreen({}, {}) }
