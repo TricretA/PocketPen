@@ -150,7 +150,7 @@ private fun Preview() {
     initPreview(LocalContext.current)
     Theme(previewDark) {
         Surface {
-            ToolbarScreen { }
+            ToolbarAdvancedScreen { }
         }
     }
 }
