@@ -34,7 +34,7 @@
     <string name="voice_error_start">Could not start recording: %1$s</string>
     <string name="voice_error_password">Voice typing is disabled in password fields</string>
     <string name="voice_offline_using_device">Offline, using device voice input</string>
-    <string name="voice_no_key_using_device">No Groq key set, using device voice input. Add it in Settings, AI assistant.</string>
+    <string name="voice_no_key_using_device">No Groq key yet, so the built-in recognizer is used. Add the key in Settings, Voice.</string>
     <string name="voice_permission_needed">Allow the microphone, then tap the mic key again</string>
     <string name="voice_permission_granted">Microphone allowed</string>
     <string name="voice_permission_denied">Microphone permission denied</string>

@@ -204,7 +204,6 @@ class ToolsPanelView(context: Context, private val host: Host) : FrameLayout(con
         pager.adapter = PageAdapter(pages)
         pager.overScrollMode = OVER_SCROLL_NEVER
         PagerSnapHelper().attachToRecyclerView(pager)
-        column.addView(pager, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
 
         val bottom = FrameLayout(context)
         val dotsView = DotsView(context, pages.size.coerceAtLeast(1), accent, lineColor)
@@ -221,6 +220,7 @@ class ToolsPanelView(context: Context, private val host: Host) : FrameLayout(con
         pencilParams.marginEnd = dp(12)
         bottom.addView(pencil, pencilParams)
         column.addView(bottom, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(36)))
+        column.addView(pager, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
 
         pager.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {

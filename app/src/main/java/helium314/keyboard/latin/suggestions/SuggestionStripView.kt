@@ -419,6 +419,11 @@ class SuggestionStripView(context: Context, attrs: AttributeSet?, defStyle: Int)
 
     private fun onLongClickToolbarKey(view: View) {
         val tag = view.tag as? ToolbarKey ?: return
+        if (tag == ToolbarKey.VOICE) {
+            AudioAndHapticFeedbackManager.getInstance().performHapticFeedback(this, HapticEvent.KEY_LONG_PRESS)
+            helium314.keyboard.voice.VoiceEnginePicker.show(view)
+            return
+        }
         if (!Settings.getValues().mQuickPinToolbarKeys || view.parent === pinnedKeys) {
             onLongClickToolbarKey(view) { code, isRepeat -> listener.onCodeInput(code, Constants.SUGGESTION_STRIP_COORDINATE, Constants.SUGGESTION_STRIP_COORDINATE, isRepeat) }
         } else if (view.parent === toolbar) {
