@@ -1,11 +1,11 @@
 package helium314.keyboard
 
 import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.view.View
+import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.compose.ui.test.captureToImage
-import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import helium314.keyboard.latin.utils.Theme
 import helium314.keyboard.settings.screens.AiScreen
 import helium314.keyboard.settings.screens.ClipboardManagerScreen
@@ -27,12 +27,21 @@ import kotlin.test.Test
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 @Config(qualifiers = "w411dp-h891dp-xxhdpi")
 class ScreenshotTest {
-    @get:Rule val rule = createComposeRule()
+    @get:Rule val rule = createAndroidComposeRule<ComponentActivity>()
 
     private fun shoot(name: String, dark: Boolean = false, content: @Composable () -> Unit) {
         rule.setContent { Theme(dark = dark) { content() } }
         rule.waitForIdle()
-        val bitmap = rule.onRoot().captureToImage().asAndroidBitmap()
+        val view = rule.activity.window.decorView
+        val metrics = view.resources.displayMetrics
+        view.measure(
+            View.MeasureSpec.makeMeasureSpec(metrics.widthPixels, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(metrics.heightPixels, View.MeasureSpec.EXACTLY)
+        )
+        view.layout(0, 0, metrics.widthPixels, metrics.heightPixels)
+        rule.waitForIdle()
+        val bitmap = Bitmap.createBitmap(metrics.widthPixels, metrics.heightPixels, Bitmap.Config.ARGB_8888)
+        view.draw(Canvas(bitmap))
         val dir = File("build/screens")
         dir.mkdirs()
         File(dir, "$name.png").outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
