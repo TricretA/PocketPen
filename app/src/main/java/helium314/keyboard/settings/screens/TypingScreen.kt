@@ -37,7 +37,10 @@ import helium314.keyboard.latin.settings.Defaults
 import helium314.keyboard.latin.settings.Settings
 import helium314.keyboard.latin.utils.PP
 import helium314.keyboard.latin.utils.prefs
+import helium314.keyboard.keyboard.emoji.EmojiSettings
+import helium314.keyboard.keyboard.emoji.RecentEmojis
 import helium314.keyboard.settings.ui.LivePreview
+import helium314.keyboard.settings.ui.PrefChoice
 import helium314.keyboard.settings.ui.PocketScreen
 import helium314.keyboard.settings.ui.RowDivider
 import helium314.keyboard.settings.ui.SectionLabel
@@ -128,6 +131,36 @@ fun TypingScreen(onClickBack: () -> Unit) {
             PrefSwitch(Settings.PREF_KEY_USE_DOUBLE_SPACE_PERIOD, Defaults.PREF_KEY_USE_DOUBLE_SPACE_PERIOD, R.string.sb_dspace_t, R.string.sb_dspace_d, R.drawable.ic_pp_dot)
             RowDivider()
             PrefSwitch(Settings.PREF_SHOW_NUMBER_ROW, Defaults.PREF_SHOW_NUMBER_ROW, R.string.sb_numrow_t, R.string.sb_numrow_d, R.drawable.ic_pp_keyboard)
+        }
+
+        SectionLabel(stringResource(R.string.em_section))
+        SettingsCard {
+            PrefChoice(
+                EmojiSettings.PREF_SIZE,
+                "medium",
+                listOf(
+                    stringResource(R.string.em_size_small) to "small",
+                    stringResource(R.string.em_size_medium) to "medium",
+                    stringResource(R.string.em_size_large) to "large",
+                ),
+                stringResource(R.string.em_size_t),
+                stringResource(R.string.em_size_d),
+                R.drawable.ic_pp_emoji
+            ) { helium314.keyboard.keyboard.KeyboardSwitcher.getInstance().setThemeNeedsReload() }
+            RowDivider()
+            PrefSwitch(EmojiSettings.PREF_STAY, true, R.string.em_stay_t, R.string.em_stay_d, R.drawable.ic_pp_emoji)
+            RowDivider()
+            PrefSwitch(EmojiSettings.PREF_RECENTS, true, R.string.em_recents_t, R.string.em_recents_d, R.drawable.ic_pp_clock)
+            RowDivider()
+            SettingsRow(
+                stringResource(R.string.em_clear_t),
+                stringResource(R.string.em_clear_d),
+                R.drawable.ic_pp_delete,
+                {
+                    RecentEmojis.clear()
+                    Toast.makeText(ctx, R.string.recent_emojis_cleared, Toast.LENGTH_SHORT).show()
+                }
+            ) {}
         }
 
         SectionLabel(stringResource(R.string.sb_sec_feel))

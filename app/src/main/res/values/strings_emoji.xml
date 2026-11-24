@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="em_section">Emoji</string>
+    <string name="em_size_t">Emoji size</string>
+    <string name="em_size_d">How big emojis look on the emoji panel</string>
+    <string name="em_size_small">Small</string>
+    <string name="em_size_medium">Medium</string>
+    <string name="em_size_large">Large</string>
+    <string name="em_stay_t">Stay in the emoji panel</string>
+    <string name="em_stay_d">Pick as many emojis as you like, then go back yourself</string>
+    <string name="em_recents_t">Remember recent emojis</string>
+    <string name="em_recents_d">Shows the emojis you use most in the first tab</string>
+    <string name="em_clear_t">Clear recent emojis</string>
+    <string name="em_clear_d">Removes the emojis from the recent tab</string>
+</resources>

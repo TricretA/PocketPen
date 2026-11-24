@@ -209,8 +209,9 @@ public final class EmojiPalettesView extends LinearLayout
         final Resources res = context.getResources();
         mEmojiLayoutParams = new EmojiLayoutParams(res);
         builder.setSubtype(RichInputMethodSubtype.Companion.getEmojiSubtype());
-        builder.setKeyboardGeometry(ResourceUtils.getKeyboardWidth(context, Settings.getValues()),
-                mEmojiLayoutParams.getEmojiKeyboardHeight());
+        final float emojiScale = EmojiSettings.scale(context);
+        builder.setKeyboardGeometry((int) (ResourceUtils.getKeyboardWidth(context, Settings.getValues()) * emojiScale),
+                (int) (mEmojiLayoutParams.getEmojiKeyboardHeight() * emojiScale));
         final KeyboardLayoutSet layoutSet = builder.build();
         final TypedArray emojiPalettesViewAttr = context.obtainStyledAttributes(attrs,
                 R.styleable.EmojiPalettesView, defStyle, R.style.EmojiPalettesView);
@@ -318,7 +319,7 @@ public final class EmojiPalettesView extends LinearLayout
             mKeyboardActionListener.onCodeInput(code, NOT_A_COORDINATE, NOT_A_COORDINATE, false);
         }
         mKeyboardActionListener.onReleaseKey(code, false);
-        if (Settings.getValues().mAlphaAfterEmojiInEmojiView)
+        if (!EmojiSettings.stay(getContext()))
             mKeyboardActionListener.onCodeInput(KeyCode.ALPHA, NOT_A_COORDINATE, NOT_A_COORDINATE, false);
     }
 
@@ -370,8 +371,7 @@ public final class EmojiPalettesView extends LinearLayout
     }
 
     private void addRecentKey(Key key) {
-        if (Settings.getValues().mIncognitoModeEnabled) {
-            // We do not want to log recent keys while being in incognito
+        if (Settings.getValues().mIncognitoModeEnabled || !EmojiSettings.recents(getContext())) {
             return;
         }
         if (mEmojiCategory.isInRecentTab()) {

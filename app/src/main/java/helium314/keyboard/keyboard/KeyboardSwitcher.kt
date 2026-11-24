@@ -491,8 +491,10 @@ class KeyboardSwitcher private constructor() {
 
     // TODO: Remove this method. Come up with a more comprehensive way to reset the keyboard layout
     // when a keyboard layout set doesn't get reloaded in LatinIME.onStartInputViewInternal().
-    fun resetKeyboardStateToAlphabet() =
+    fun resetKeyboardStateToAlphabet() {
+        if (isShowingEmojiPalettes && helium314.keyboard.keyboard.emoji.EmojiSettings.stay(latinIME)) return
         state.onResetKeyboardStateToAlphabet(latinIME.currentAutoCapsState, latinIME.currentRecapitalizeState)
+    }
 
     fun onPressKey(code: Int, pointerCount: Int, currentAutoCapsState: Int, currentRecapitalizeState: RecapitalizeMode?) =
         state.onPressKey(code, pointerCount, currentAutoCapsState, currentRecapitalizeState)
