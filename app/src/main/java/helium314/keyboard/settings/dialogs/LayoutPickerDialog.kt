@@ -3,6 +3,7 @@ package helium314.keyboard.settings.dialogs
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -54,6 +55,7 @@ import helium314.keyboard.settings.contentTextDirectionStyle
 import helium314.keyboard.settings.layoutFilePicker
 import helium314.keyboard.settings.layoutIntent
 import helium314.keyboard.latin.utils.previewDark
+import helium314.keyboard.settings.ui.LayoutPicture
 
 @Composable
 fun LayoutPickerDialog(
@@ -162,15 +164,17 @@ private fun LayoutItemRow(
 ) {
     val ctx = LocalContext.current
     val prefs = ctx.prefs()
+    val choose = {
+        onDismissRequest()
+        Settings.writeDefaultLayoutName(layoutName, layoutType, prefs)
+        KeyboardSwitcher.getInstance().setThemeNeedsReload()
+    }
+    Column(Modifier.padding(bottom = 8.dp)) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .clickable {
-                onDismissRequest()
-                Settings.writeDefaultLayoutName(layoutName, layoutType, prefs)
-                KeyboardSwitcher.getInstance().setThemeNeedsReload()
-            }
+            .clickable { choose() }
             .padding(start = 6.dp)
             .heightIn(min = 40.dp)
     ) {
@@ -210,6 +214,13 @@ private fun LayoutItemRow(
             }
         }
         EditButton { onClickEdit(layoutName to (if (isCustom) null else LayoutUtils.getContent(layoutType, layoutName, ctx))) }
+    }
+    LayoutPicture(
+        layoutType,
+        layoutName,
+        Modifier.padding(start = 6.dp, end = 6.dp).clickable { choose() },
+        height = 64.dp
+    )
     }
 }
 

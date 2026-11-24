@@ -10,10 +10,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import helium314.keyboard.latin.utils.PP
+import helium314.keyboard.clipboardplus.ScreenshotAccess
 import helium314.keyboard.settings.ui.KeyCap
+import androidx.compose.foundation.layout.width
 import helium314.keyboard.settings.ui.PillRow
 import helium314.keyboard.settings.ui.PocketFrame
-import helium314.keyboard.settings.ui.ValueTile
+import helium314.keyboard.settings.ui.RowDivider
+import helium314.keyboard.settings.ui.SectionLabel
+import helium314.keyboard.settings.ui.SettingsCard
+import helium314.keyboard.settings.ui.SwitchRow
+import helium314.keyboard.settings.ui.ValueRow
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -59,7 +65,6 @@ import helium314.keyboard.settings.preferences.Preference
 
 private sealed interface ClipDialog {
     data object Retention : ClipDialog
-    data object Add : ClipDialog
     data class Edit(val entry: ClipboardHistoryEntry) : ClipDialog
     data class Delete(val entry: ClipboardHistoryEntry) : ClipDialog
 }
@@ -81,6 +86,7 @@ fun ClipboardManagerScreen(onClickBack: () -> Unit) {
     var query by remember { mutableStateOf("") }
     var tab by remember { mutableStateOf(ClipboardDao.Tab.ALL) }
     var dialog by remember { mutableStateOf<ClipDialog?>(null) }
+    val screenshots = remember(version) { ScreenshotAccess.active(ctx) }
     val retention = remember(version) {
         ctx.prefs().getInt(Settings.PREF_CLIPBOARD_HISTORY_RETENTION_TIME, Defaults.PREF_CLIPBOARD_HISTORY_RETENTION_TIME)
     }
@@ -92,23 +98,26 @@ fun ClipboardManagerScreen(onClickBack: () -> Unit) {
 
     PocketFrame(stringResource(R.string.pp_clipboard), onClickBack) {
         Column(Modifier.weight(1f).padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                ValueTile(
-                    stringResource(R.string.pp_retention),
+            SettingsCard {
+                ValueRow(
+                    stringResource(R.string.sb_clip_keep_t),
+                    stringResource(R.string.sb_clip_keep_d),
                     retentionLabel(retention),
-                    R.drawable.ic_pp_clock,
-                    { dialog = ClipDialog.Retention },
-                    Modifier.weight(1f)
-                )
-                KeyCap(onClick = { dialog = ClipDialog.Add }, modifier = Modifier.size(88.dp), color = PP.Signal, lip = Color(0xFFB93405), corner = 24.dp) {
-                    Icon(
-                        painterResource(R.drawable.ic_pp_add),
-                        contentDescription = stringResource(R.string.pp_snippet),
-                        tint = PP.Ink,
-                        modifier = Modifier.align(Alignment.Center).size(34.dp)
-                    )
+                    R.drawable.ic_pp_clock
+                ) { dialog = ClipDialog.Retention }
+                RowDivider()
+                SwitchRow(
+                    stringResource(R.string.sb_clip_screens_t),
+                    stringResource(R.string.sb_clip_screens_d),
+                    R.drawable.ic_pp_image,
+                    screenshots
+                ) { on ->
+                    ScreenshotAccess.setEnabled(ctx, on)
+                    if (on && !ScreenshotAccess.hasPermission(ctx)) ScreenshotAccess.requestPermission(ctx)
+                    version++
                 }
             }
+            SectionLabel(stringResource(R.string.sb_clip_list))
             OutlinedTextField(
                 value = query,
                 onValueChange = { query = it },
@@ -123,7 +132,7 @@ fun ClipboardManagerScreen(onClickBack: () -> Unit) {
                     stringResource(R.string.clipboard_tab_all) to ClipboardDao.Tab.ALL,
                     stringResource(R.string.clipboard_tab_recent) to ClipboardDao.Tab.RECENT,
                     stringResource(R.string.clipboard_tab_pinned) to ClipboardDao.Tab.PINNED,
-                    stringResource(R.string.clipboard_tab_snippets) to ClipboardDao.Tab.SNIPPETS,
+                    stringResource(R.string.clipboard_tab_images) to ClipboardDao.Tab.IMAGES,
                 ),
                 selected = tab,
                 onSelect = { tab = it }
@@ -152,7 +161,7 @@ fun ClipboardManagerScreen(onClickBack: () -> Unit) {
                         Icon(
                             painterResource(
                                 when {
-                                    entry.isSnippet -> R.drawable.ic_pp_snippet
+                                    entry.filename != null -> R.drawable.ic_pp_image
                                     entry.isPinned -> R.drawable.ic_pp_pin
                                     else -> R.drawable.ic_pp_clock
                                 }
@@ -169,7 +178,7 @@ fun ClipboardManagerScreen(onClickBack: () -> Unit) {
                             modifier = Modifier.weight(1f).padding(horizontal = 12.dp)
                         )
                         IconButton(onClick = {
-                            dao?.cycleKind(entry.id)
+                            dao?.setPinned(entry.id, !entry.isPinned)
                             version++
                         }) {
                             Icon(painterResource(R.drawable.ic_pp_pin), contentDescription = stringResource(R.string.pp_pin), modifier = Modifier.size(22.dp))
@@ -197,21 +206,6 @@ fun ClipboardManagerScreen(onClickBack: () -> Unit) {
             },
             onDismiss = { dialog = null }
         )
-
-        ClipDialog.Add -> {
-            var text by remember { mutableStateOf("") }
-            ClipTextDialog(
-                title = stringResource(R.string.clipboard_manager_add_snippet),
-                value = text,
-                onValueChange = { text = it },
-                onSave = {
-                    dao?.addSnippet(text)
-                    version++
-                    dialog = null
-                },
-                onDismiss = { dialog = null }
-            )
-        }
 
         is ClipDialog.Edit -> {
             var text by remember { mutableStateOf(current.entry.text.orEmpty()) }

@@ -35,7 +35,7 @@ import helium314.keyboard.settings.preferences.SwitchPreference
 import helium314.keyboard.latin.utils.previewDark
 
 @Composable
-fun ToolbarScreen(
+fun ToolbarAdvancedScreen(
     onClickBack: () -> Unit,
 ) {
     val prefs = LocalContext.current.prefs()

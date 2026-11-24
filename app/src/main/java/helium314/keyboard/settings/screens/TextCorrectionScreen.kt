@@ -1,6 +1,21 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package helium314.keyboard.settings.screens
 
+import androidx.compose.runtime.mutableStateOf as scMutableStateOf
+import helium314.keyboard.settings.ui.PocketScreen as ScPocketScreen
+import helium314.keyboard.settings.ui.LivePreview
+import helium314.keyboard.settings.ui.PrefSwitch
+import helium314.keyboard.settings.ui.PrefChoice
+import helium314.keyboard.settings.ui.PrefIntChoice
+import helium314.keyboard.settings.ui.ScSection
+import helium314.keyboard.settings.ui.ScCollapsible
+import helium314.keyboard.settings.ui.EmbeddedSetting
+import helium314.keyboard.settings.ui.RowDivider
+import helium314.keyboard.settings.ui.SettingsCard
+import helium314.keyboard.settings.ui.SettingsRow
+import helium314.keyboard.settings.ui.ValueRow
+import helium314.keyboard.settings.ui.SectionLabel
+
 import android.Manifest
 import android.content.Context
 import android.os.Build
@@ -50,58 +65,89 @@ import helium314.keyboard.settings.preferences.TextInputPreference
 fun TextCorrectionScreen(
     onClickBack: () -> Unit,
 ) {
-    val prefs = LocalContext.current.prefs()
-    val b = (LocalContext.current.getActivity() as? SettingsActivity)?.prefChanged?.collectAsState()
-    if ((b?.value ?: 0) < 0)
-        Log.v("irrelevant", "stupid way to trigger recomposition on preference change")
-    val autocorrectEnabled = prefs.getBoolean(Settings.PREF_AUTO_CORRECTION, Defaults.PREF_AUTO_CORRECTION)
-    val suggestionsVisible = Settings.readToolbarMode(prefs).let { it == ToolbarMode.SUGGESTION_STRIP || it == ToolbarMode.EXPANDABLE }
-    val suggestionsEnabled = suggestionsVisible && prefs.getBoolean(Settings.PREF_SHOW_SUGGESTIONS, Defaults.PREF_SHOW_SUGGESTIONS)
-    val gestureEnabled = JniUtils.sHaveGestureLib && prefs.getBoolean(Settings.PREF_GESTURE_INPUT, Defaults.PREF_GESTURE_INPUT)
-    val items = listOf(
-        SettingsWithoutKey.EDIT_PERSONAL_DICTIONARY,
-        R.string.settings_category_correction,
-        Settings.PREF_BLOCK_POTENTIALLY_OFFENSIVE,
-        Settings.PREF_AUTO_CORRECTION,
-        if (autocorrectEnabled) Settings.PREF_MORE_AUTO_CORRECTION else null,
-        if (autocorrectEnabled) Settings.PREF_AUTOCORRECT_SHORTCUTS else null,
-        if (autocorrectEnabled) Settings.PREF_AUTOCORRECT_CAPITALIZED_SUGGESTION else null,
-        if (autocorrectEnabled) Settings.PREF_AUTO_CORRECT_CONFIDENCE else null,
-        if (autocorrectEnabled) Settings.PREF_BACKSPACE_REVERTS_AUTOCORRECT else null,
-        Settings.PREF_AUTO_CAP,
-        R.string.settings_category_space,
-        Settings.PREF_KEY_USE_DOUBLE_SPACE_PERIOD,
-        Settings.PREF_AUTOSPACE_AFTER_PUNCTUATION,
-        Settings.PREF_AUTOSPACE_AFTER_SUGGESTION,
-        if (gestureEnabled) Settings.PREF_AUTOSPACE_BEFORE_GESTURE_TYPING else null,
-        if (gestureEnabled) Settings.PREF_AUTOSPACE_AFTER_GESTURE_TYPING else null,
-        Settings.PREF_SHIFT_REMOVES_AUTOSPACE,
-        R.string.settings_category_suggestions,
-        if (suggestionsVisible) Settings.PREF_SHOW_SUGGESTIONS else null,
-        if (suggestionsEnabled) Settings.PREF_ALWAYS_SHOW_SUGGESTIONS else null,
-        if (suggestionsEnabled && prefs.getBoolean(Settings.PREF_ALWAYS_SHOW_SUGGESTIONS, Defaults.PREF_ALWAYS_SHOW_SUGGESTIONS))
-            Settings.PREF_ALWAYS_SHOW_SUGGESTIONS_EXCEPT_WEB_TEXT else null,
-        if (suggestionsEnabled) Settings.PREF_CENTER_SUGGESTION_TEXT_TO_ENTER else null,
-        if (suggestionsEnabled || autocorrectEnabled) Settings.PREF_SUGGEST_EMOJIS else null,
-        if (suggestionsEnabled || autocorrectEnabled) Settings.PREF_INLINE_EMOJI_SEARCH else null,
-        Settings.PREF_KEY_USE_PERSONALIZED_DICTS,
-        Settings.PREF_BIGRAM_PREDICTIONS,
-        Settings.PREF_SUGGEST_PUNCTUATION,
-        if (prefs.getBoolean(Settings.PREF_SUGGEST_PUNCTUATION, Defaults.PREF_SUGGEST_PUNCTUATION))
-            Settings.PREF_PUNCTUATION_SUGGESTIONS else null,
-        Settings.PREF_SUGGEST_CLIPBOARD_CONTENT,
-        Settings.PREF_USE_CONTACTS,
-        Settings.PREF_USE_APPS,
-        if (prefs.getBoolean(Settings.PREF_KEY_USE_PERSONALIZED_DICTS, Defaults.PREF_KEY_USE_PERSONALIZED_DICTS))
-            Settings.PREF_ADD_TO_PERSONAL_DICTIONARY else null,
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
-            Settings.PREF_SPELLCHECK_SUGGEST else null,
-    )
-    SearchSettingsScreen(
-        onClickBack = onClickBack,
-        title = stringResource(R.string.settings_screen_correction),
-        settings = items
-    )
+    ScPocketScreen(stringResource(R.string.pp_correction), onClickBack, footer = { LivePreview() }) {
+        ScSection(stringResource(R.string.sc_fix)) {
+            PrefSwitch(
+                Settings.PREF_AUTO_CORRECTION, Defaults.PREF_AUTO_CORRECTION,
+                stringResource(R.string.autocorrect), stringResource(R.string.sc_autocorrect_sub), R.drawable.ic_pp_spellcheck
+            )
+            RowDivider()
+            PrefSwitch(
+                Settings.PREF_AUTO_CAP, Defaults.PREF_AUTO_CAP,
+                stringResource(R.string.sc_autocap), stringResource(R.string.sc_autocap_sub), R.drawable.ic_pp_abc
+            )
+            RowDivider()
+            PrefSwitch(
+                Settings.PREF_BLOCK_POTENTIALLY_OFFENSIVE, Defaults.PREF_BLOCK_POTENTIALLY_OFFENSIVE,
+                stringResource(R.string.sc_offensive), stringResource(R.string.sc_offensive_sub), R.drawable.ic_pp_lock
+            )
+        }
+        ScSection(stringResource(R.string.sc_spacing)) {
+            PrefSwitch(
+                Settings.PREF_KEY_USE_DOUBLE_SPACE_PERIOD, Defaults.PREF_KEY_USE_DOUBLE_SPACE_PERIOD,
+                stringResource(R.string.sc_double_space), stringResource(R.string.sc_double_space_sub), R.drawable.ic_pp_dot
+            )
+            RowDivider()
+            PrefSwitch(
+                Settings.PREF_AUTOSPACE_AFTER_PUNCTUATION, Defaults.PREF_AUTOSPACE_AFTER_PUNCTUATION,
+                stringResource(R.string.sc_autospace), stringResource(R.string.sc_autospace_sub), R.drawable.ic_pp_dot
+            )
+        }
+        ScSection(stringResource(R.string.sc_suggestions)) {
+            PrefSwitch(
+                Settings.PREF_SHOW_SUGGESTIONS, Defaults.PREF_SHOW_SUGGESTIONS,
+                stringResource(R.string.sc_show_suggestions), stringResource(R.string.sc_show_suggestions_sub), R.drawable.ic_pp_strip
+            )
+            RowDivider()
+            PrefSwitch(
+                Settings.PREF_BIGRAM_PREDICTIONS, Defaults.PREF_BIGRAM_PREDICTIONS,
+                stringResource(R.string.sc_next_word), stringResource(R.string.sc_next_word_sub), R.drawable.ic_pp_next
+            )
+            RowDivider()
+            PrefSwitch(
+                Settings.PREF_SUGGEST_EMOJIS, Defaults.PREF_SUGGEST_EMOJIS,
+                stringResource(R.string.sc_emoji_suggest), stringResource(R.string.sc_emoji_suggest_sub), R.drawable.ic_pp_emoji
+            )
+            RowDivider()
+            PrefSwitch(
+                Settings.PREF_SUGGEST_CLIPBOARD_CONTENT, Defaults.PREF_SUGGEST_CLIPBOARD_CONTENT,
+                stringResource(R.string.sc_copied_suggest), stringResource(R.string.sc_copied_suggest_sub), R.drawable.ic_pp_copy
+            )
+        }
+        ScSection(stringResource(R.string.sc_my_words)) {
+            PrefSwitch(
+                Settings.PREF_KEY_USE_PERSONALIZED_DICTS, Defaults.PREF_KEY_USE_PERSONALIZED_DICTS,
+                stringResource(R.string.sc_learn), stringResource(R.string.sc_learn_sub), R.drawable.ic_pp_star
+            )
+            RowDivider()
+            SettingsRow(
+                stringResource(R.string.sc_my_words), stringResource(R.string.sc_my_words_sub), R.drawable.ic_pp_snippet,
+                { SettingsDestination.navigateTo(SettingsDestination.PersonalDictionaries) }
+            ) {
+                androidx.compose.material3.Icon(
+                    androidx.compose.ui.res.painterResource(R.drawable.ic_pp_next), null,
+                    tint = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        ScCollapsible(stringResource(R.string.sc_more), stringResource(R.string.sc_more_sub), R.drawable.ic_pp_all) {
+            EmbeddedSetting(Settings.PREF_MORE_AUTO_CORRECTION)
+            EmbeddedSetting(Settings.PREF_AUTOCORRECT_SHORTCUTS)
+            EmbeddedSetting(Settings.PREF_AUTOCORRECT_CAPITALIZED_SUGGESTION)
+            EmbeddedSetting(Settings.PREF_AUTO_CORRECT_CONFIDENCE)
+            EmbeddedSetting(Settings.PREF_BACKSPACE_REVERTS_AUTOCORRECT)
+            EmbeddedSetting(Settings.PREF_SHIFT_REMOVES_AUTOSPACE)
+            EmbeddedSetting(Settings.PREF_AUTOSPACE_AFTER_SUGGESTION)
+            EmbeddedSetting(Settings.PREF_ALWAYS_SHOW_SUGGESTIONS)
+            EmbeddedSetting(Settings.PREF_INLINE_EMOJI_SEARCH)
+            EmbeddedSetting(Settings.PREF_SUGGEST_PUNCTUATION)
+            EmbeddedSetting(Settings.PREF_PUNCTUATION_SUGGESTIONS)
+            EmbeddedSetting(Settings.PREF_USE_CONTACTS)
+            EmbeddedSetting(Settings.PREF_USE_APPS)
+            EmbeddedSetting(Settings.PREF_ADD_TO_PERSONAL_DICTIONARY)
+            EmbeddedSetting(Settings.PREF_SPELLCHECK_SUGGEST)
+        }
+    }
 }
 
 fun createCorrectionSettings(context: Context) = listOf(

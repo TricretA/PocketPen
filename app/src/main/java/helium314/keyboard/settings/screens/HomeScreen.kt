@@ -34,11 +34,11 @@ import helium314.keyboard.latin.settings.Settings
 import helium314.keyboard.latin.utils.JniUtils
 import helium314.keyboard.latin.utils.prefs
 import helium314.keyboard.settings.SettingsDestination
-import helium314.keyboard.settings.ui.KeyboardPreview
+import helium314.keyboard.settings.ui.LiveKeyboard
+import helium314.keyboard.settings.ui.rememberLiveSpec
 import helium314.keyboard.settings.ui.NavTile
 import helium314.keyboard.settings.ui.PocketScreen
 import helium314.keyboard.settings.ui.TileRows
-import helium314.keyboard.settings.ui.previewColorsFor
 
 private class Destination(val label: Int, val icon: Int, val route: String)
 
@@ -47,10 +47,6 @@ fun HomeScreen(onNavigate: (String) -> Unit, onClickBack: () -> Unit) {
     val ctx = LocalContext.current
     val prefs = ctx.prefs()
     val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
-    val themeName = if (dark && prefs.getBoolean(Settings.PREF_THEME_DAY_NIGHT, Defaults.PREF_THEME_DAY_NIGHT))
-        prefs.getString(Settings.PREF_THEME_COLORS_NIGHT, Defaults.PREF_THEME_COLORS_NIGHT)
-    else
-        prefs.getString(Settings.PREF_THEME_COLORS, Defaults.PREF_THEME_COLORS)
     val destinations = listOf(
         Destination(R.string.pp_look, R.drawable.ic_settings_appearance, SettingsDestination.Look),
         Destination(R.string.pp_typing, R.drawable.ic_pp_keyboard, SettingsDestination.Typing),
@@ -78,14 +74,10 @@ fun HomeScreen(onNavigate: (String) -> Unit, onClickBack: () -> Unit) {
             Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(bottom = 28.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            KeyboardPreview(
-                colors = previewColorsFor(themeName ?: ""),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(168.dp)
-                    .clip(RoundedCornerShape(28.dp))
-                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(28.dp))
-                    .clickable(role = Role.Button) { onNavigate(SettingsDestination.Look) }
+            LiveKeyboard(
+                spec = rememberLiveSpec(),
+                baseHeight = 150,
+                modifier = Modifier.clickable(role = Role.Button) { onNavigate(SettingsDestination.Look) }
             )
             TileRows(columns = 2, count = destinations.size) { i ->
                 val d = destinations[i]
@@ -104,7 +96,6 @@ fun MoreScreen(onNavigate: (String) -> Unit, onClickBack: () -> Unit) {
         Destination(R.string.pp_layouts, R.drawable.ic_settings_layout, SettingsDestination.Layouts),
         Destination(R.string.pp_dictionaries, R.drawable.ic_dictionary, SettingsDestination.Dictionaries),
         if (JniUtils.sHaveGestureLib) Destination(R.string.pp_glide, R.drawable.ic_settings_gesture, SettingsDestination.GestureTyping) else null,
-        Destination(R.string.pp_extras, R.drawable.ic_pp_image, SettingsDestination.AppearanceMore),
         Destination(R.string.pp_advanced, R.drawable.ic_settings_advanced, SettingsDestination.Advanced),
         Destination(R.string.pp_about, R.drawable.ic_settings_about, SettingsDestination.About),
     )

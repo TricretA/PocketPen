@@ -120,11 +120,13 @@ object AiClient {
 }
 
 object AiRunner {
-    fun run(context: Context, action: AiAction, text: String): String {
-        val provider = AiSettings.provider(context)
+    fun run(context: Context, action: AiAction, text: String, customInstruction: String? = null): String =
+        runWith(context, AiSettings.provider(context), action, text, customInstruction)
+
+    fun runWith(context: Context, provider: AiProvider, action: AiAction, text: String, customInstruction: String? = null): String {
         val apiKey = AiKeyStore.load(context, provider)
             ?: throw AiException(context.getString(R.string.ai_error_no_key, provider.label))
-        val instruction = AiPrompts.instruction(context, action)
+        val instruction = customInstruction?.takeIf { it.isNotBlank() } ?: AiPrompts.instruction(context, action)
         if (instruction.isBlank()) throw AiException(context.getString(R.string.ai_error_no_custom_prompt))
         return AiClient.complete(
             provider,

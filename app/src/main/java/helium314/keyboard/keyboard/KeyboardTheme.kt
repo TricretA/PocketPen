@@ -70,6 +70,7 @@ private constructor(val themeId: Int, @JvmField val mStyleId: Int) {
         const val THEME_VIOLETTE = "violette"
         fun getAvailableDefaultColors(prefs: SharedPreferences, isNight: Boolean) = listOfNotNull(
             THEME_PAPER, THEME_INK, THEME_SIGNAL,
+            *helium314.keyboard.latin.utils.PocketThemes.all.map { it.id }.filter { it !in setOf(THEME_PAPER, THEME_INK, THEME_SIGNAL, THEME_BLACK, THEME_OCEAN, THEME_FOREST, THEME_VIOLETTE, THEME_PINK, THEME_SAND) }.toTypedArray(),
             if (!isNight) THEME_LIGHT else null, THEME_DARK,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) THEME_DYNAMIC else null,
             if (prefs.getString(Settings.PREF_THEME_STYLE, Defaults.PREF_THEME_STYLE) == STYLE_HOLO) THEME_HOLO_WHITE else null,
@@ -151,6 +152,9 @@ private constructor(val themeId: Int, @JvmField val mStyleId: Int) {
         private fun getThemeColors(themeName: String, themeStyle: String, context: Context, prefs: SharedPreferences, isNight: Boolean): Colors {
             val hasBorders = prefs.getBoolean(Settings.PREF_THEME_KEY_BORDERS, Defaults.PREF_THEME_KEY_BORDERS)
             val backgroundImage = Settings.readUserBackgroundImage(context, isNight)
+            helium314.keyboard.latin.utils.PocketThemes.get(themeName)?.let {
+                return helium314.keyboard.latin.utils.PocketThemes.colors(it, themeStyle, hasBorders, backgroundImage)
+            }
             return when (themeName) {
                 THEME_DYNAMIC -> {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) DynamicColors(context, themeStyle, hasBorders, backgroundImage)

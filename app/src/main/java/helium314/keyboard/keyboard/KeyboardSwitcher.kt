@@ -98,6 +98,8 @@ class KeyboardSwitcher private constructor() {
     val mainKeyboardView get() = inputView?.keyboardView
     val keyboard get() = mainKeyboardView?.keyboard
     val wrapperView get() = inputView?.wrapperView
+    val toolsHost: android.view.ViewGroup? get() = inputView?.root
+    val suggestionStrip: helium314.keyboard.latin.suggestions.SuggestionStripView? get() = inputView?.suggestionStripView
     val stripContainer get() = inputView?.stripContainer
     val emojiTabStrip get() = inputView?.emojiTabStrip
     val clipboardStrip get() = inputView?.mainKeyboardFrame?.stripContainer?.clipboardStrip
@@ -137,6 +139,7 @@ class KeyboardSwitcher private constructor() {
             Settings.getInstance().loadSettings(displayContext, Settings.getValues().mLocale, Settings.getValues().mInputAttributes)
 
         updateKeyboardThemeAndContextThemeWrapper(displayContext, getKeyboardTheme(displayContext))
+        helium314.keyboard.toolspanel.ToolsPanelController.reset()
         val inputView = InputViewBinding.inflate(LayoutInflater.from(themeContext))
         this.inputView = inputView
         emojiPalettes = null
@@ -291,6 +294,8 @@ class KeyboardSwitcher private constructor() {
     }
 
     fun onHideWindow() {
+        helium314.keyboard.toolspanel.ToolsPanelController.dismiss()
+        helium314.keyboard.voice.VoiceLauncher.cancel()
         inputView?.keyboardView?.onHideWindow()
     }
 

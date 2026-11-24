@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="vz_getting_ready">Getting ready…</string>
+    <string name="vz_speak_now">Speak now</string>
+    <string name="vz_listening">Listening…</string>
+    <string name="vz_transcribing">Transcribing…</string>
+    <string name="vz_didnt_catch">Didn\'t catch that. Tap the mic to try again</string>
+    <string name="vz_error">Voice input isn\'t available right now</string>
+    <string name="vz_start_error">Couldn\'t start the mic</string>
+    <string name="vz_listen_section">How should it listen?</string>
+    <string name="vz_builtin">Built-in (your phone)</string>
+    <string name="vz_builtin_sub">Free, no setup</string>
+    <string name="vz_whisper">Whisper (more accurate)</string>
+    <string name="vz_whisper_sub">Needs internet and a free Groq key</string>
+    <string name="vz_whisper_section">Whisper</string>
+    <string name="vz_key_title">Groq key</string>
+    <string name="vz_key_saved">Key saved ✓</string>
+    <string name="vz_key_missing">Paste your free key from groq.com</string>
+    <string name="vz_key_hint">Groq key</string>
+    <string name="vz_paste">Paste</string>
+    <string name="vz_save">Save</string>
+    <string name="vz_remove">Remove</string>
+    <string name="vz_accurate">Extra accurate</string>
+    <string name="vz_accurate_sub">Slower, better with accents</string>
+    <string name="vz_language">Language</string>
+    <string name="vz_language_auto">Detect automatically</string>
+    <string name="vz_cleanup">Fix grammar after speaking</string>
+    <string name="vz_cleanup_sub">Uses your AI provider</string>
+    <string name="vz_words">Words to remember</string>
+    <string name="vz_words_sub">Names or terms it often gets wrong</string>
+    <string name="vz_words_none">None added</string>
+    <string name="vz_mic_section">Microphone</string>
+    <string name="vz_mic">Microphone access</string>
+    <string name="vz_mic_allowed">Allowed</string>
+    <string name="vz_mic_tap">Tap to allow</string>
+</resources>

@@ -65,6 +65,16 @@ interface Colors {
 
     /** returns a colored drawable selected from [attr], which must contain using R.styleable.KeyboardView_* */
     fun selectAndColorDrawable(attr: TypedArray, color: ColorType): Drawable {
+        if (color == KEY_BACKGROUND || color == FUNCTIONAL_KEY_BACKGROUND || color == SPACE_BAR_BACKGROUND || color == ACTION_KEY_BACKGROUND) {
+            val context = Settings.getCurrentContext()
+            val spec = KeyShape.read(context.prefs())
+            if (spec != null) {
+                val auto = (get(KEY_TEXT) and 0x00FFFFFF) or 0x55000000
+                val custom = KeyShapeDrawable(spec, context.resources.displayMetrics.density, auto)
+                setColor(custom, color)
+                return custom
+            }
+        }
         val drawable = when (color) {
             KEY_BACKGROUND, MORE_SUGGESTIONS_WORD_BACKGROUND, ACTION_KEY_POPUP_KEYS_BACKGROUND, POPUP_KEYS_BACKGROUND ->
                 attr.getDrawable(R.styleable.KeyboardView_keyBackground)

@@ -6,6 +6,8 @@ import android.content.Context
 import android.graphics.Typeface
 import android.widget.TextView
 import androidx.compose.ui.text.font.FontFamily
+import androidx.core.content.res.ResourcesCompat
+import helium314.keyboard.latin.utils.PocketFonts
 import helium314.keyboard.latin.common.isEmoji
 import helium314.keyboard.latin.settings.Settings
 
@@ -22,6 +24,9 @@ object KeyboardTypeface {
     private var emojiTypefaceLoaded = false
 
     private fun loadCustomTypeface(context: Context): Typeface? {
+        PocketFonts.selected(context)?.let { entry ->
+            runCatching { ResourcesCompat.getFont(context, entry.res) }.getOrNull()?.let { return it }
+        }
         return runCatching {
             Typeface.createFromFile(Settings.getCustomFontFile(context))
         }.getOrNull()

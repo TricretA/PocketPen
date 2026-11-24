@@ -133,14 +133,14 @@ enum class ToolbarMode {
 val toolbarKeyStrings = entries.associateWithTo(EnumMap(ToolbarKey::class.java)) { it.toString().lowercase(Locale.US) }
 
 val defaultToolbarPref by lazy {
-    val default = listOf(SETTINGS, VOICE, HANDWRITING, CLIPBOARD, AI, UNDO, PASTE)
+    val default = listOf(EMOJI, AI, CLIPBOARD, UNDO, SETTINGS)
     val others = entries.filterNot { it in default || it == CLOSE_HISTORY }
     default.joinToString(Separators.ENTRY) { it.name + Separators.KV + true } + Separators.ENTRY +
             others.joinToString(Separators.ENTRY) { it.name + Separators.KV + false }
 }
 
 val defaultPinnedToolbarPref = entries.filterNot { it == CLOSE_HISTORY }.joinToString(Separators.ENTRY) {
-    it.name + Separators.KV + false
+    it.name + Separators.KV + (it == VOICE)
 }
 
 val defaultClipboardToolbarPref by lazy {
@@ -155,6 +155,13 @@ fun upgradeToolbarPrefs(prefs: SharedPreferences) {
     upgradeToolbarPref(prefs, Settings.PREF_TOOLBAR_KEYS, defaultToolbarPref, setOf(HANDWRITING.name, AI.name))
     upgradeToolbarPref(prefs, Settings.PREF_PINNED_TOOLBAR_KEYS, defaultPinnedToolbarPref)
     upgradeToolbarPref(prefs, Settings.PREF_CLIPBOARD_TOOLBAR_KEYS, defaultClipboardToolbarPref)
+    if (!prefs.getBoolean(helium314.keyboard.toolspanel.ToolsLayout.PREF_MIGRATED, false)) {
+        helium314.keyboard.toolspanel.ToolsLayout.reset(prefs)
+        prefs.edit {
+            putBoolean(Settings.PREF_AUTO_SHOW_TOOLBAR, true)
+            putBoolean(helium314.keyboard.toolspanel.ToolsLayout.PREF_MIGRATED, true)
+        }
+    }
 }
 
 private fun upgradeToolbarPref(prefs: SharedPreferences, pref: String, default: String, enabledByDefault: Set<String> = emptySet()) {

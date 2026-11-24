@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -89,7 +90,12 @@ fun PocketFrame(title: String, onBack: (() -> Unit)?, content: @Composable Colum
 }
 
 @Composable
-fun PocketScreen(title: String, onBack: (() -> Unit)?, content: @Composable ColumnScope.() -> Unit) {
+fun PocketScreen(
+    title: String,
+    onBack: (() -> Unit)?,
+    footer: (@Composable () -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit
+) {
     PocketFrame(title, onBack) {
         Column(
             Modifier
@@ -100,6 +106,7 @@ fun PocketScreen(title: String, onBack: (() -> Unit)?, content: @Composable Colu
             verticalArrangement = Arrangement.spacedBy(14.dp),
             content = content
         )
+        footer?.invoke()
     }
 }
 
@@ -325,7 +332,38 @@ data class PreviewColors(
     val ink: Color,
 )
 
-fun previewColorsFor(theme: String): PreviewColors = when (theme) {
+data class PreviewShape(
+    val radius: Float = 6f,
+    val border: Float = 0f,
+    val borderColor: Color? = null,
+    val lip: Float = 0f,
+    val filled: Boolean = true,
+)
+
+fun previewColorsFor(theme: String): PreviewColors {
+    val pocket = helium314.keyboard.latin.utils.PocketThemes.get(theme)
+    if (pocket != null) return PreviewColors(
+        Color(pocket.background.toInt()),
+        Color(pocket.key.toInt()),
+        Color(pocket.functional.toInt()),
+        Color(pocket.accent.toInt()),
+        Color(pocket.text.toInt())
+    )
+    return legacyPreviewColorsFor(theme)
+}
+
+fun previewShapeFor(theme: String): PreviewShape {
+    val pocket = helium314.keyboard.latin.utils.PocketThemes.get(theme) ?: return PreviewShape()
+    return PreviewShape(
+        pocket.radius.toFloat(),
+        pocket.border,
+        if (pocket.borderColor != 0L) Color(pocket.borderColor.toInt()) else null,
+        pocket.lip,
+        pocket.borders
+    )
+}
+
+private fun legacyPreviewColorsFor(theme: String): PreviewColors = when (theme) {
     "ink" -> PreviewColors(PP.Ink, Color(0xFF262A36), Color(0xFF1C1F29), PP.Signal, PP.Paper)
     "signal" -> PreviewColors(PP.Signal, PP.Paper, Color(0xFFFFCEBA), PP.Ink, PP.Ink)
     "black" -> PreviewColors(Color.Black, Color(0xFF1B1B1B), Color(0xFF1B1B1B), Color(0xFF4F83FF), Color.White)
@@ -341,10 +379,18 @@ fun previewColorsFor(theme: String): PreviewColors = when (theme) {
 }
 
 @Composable
-fun KeyboardPreview(colors: PreviewColors, modifier: Modifier = Modifier, bordered: Boolean = false) {
+fun KeyboardPreview(
+    colors: PreviewColors,
+    modifier: Modifier = Modifier,
+    bordered: Boolean = false,
+    shape: PreviewShape? = null,
+    numberRow: Boolean = false,
+    textScale: Float = 1f,
+) {
     Canvas(modifier) {
         val w = size.width
         val h = size.height
+        val unit = w / 360f
         drawRect(colors.background)
         val pad = w * 0.03f
         val stripH = h * 0.14f
@@ -358,19 +404,26 @@ fun KeyboardPreview(colors: PreviewColors, modifier: Modifier = Modifier, border
                 cornerRadius = CornerRadius(stripH * 0.12f)
             )
         }
-        val rows = 4
+        val rows = if (numberRow) 5 else 4
         val gap = w * 0.012f
         val top = stripH + gap
         val rowH = (h - top - pad * 0.6f - gap * (rows - 1)) / rows
-        val radius = rowH * 0.28f
+        val radius = if (shape != null) (shape.radius * unit).coerceAtMost(rowH / 2f) else rowH * 0.28f
+        val lip = if (shape != null) shape.lip * unit else 0f
+        val strokeW = if (shape != null) shape.border * unit else if (bordered) 2f else 0f
+        val strokeColor = shape?.borderColor ?: colors.ink.copy(alpha = 0.3f)
+        val filled = shape?.filled ?: true
+        val markScale = textScale.coerceIn(0.6f, 1.6f)
         fun key(x: Float, y: Float, kw: Float, color: Color, mark: Boolean) {
-            drawRoundRect(color, Offset(x, y), Size(kw, rowH), CornerRadius(radius))
-            if (bordered) drawRoundRect(colors.ink.copy(alpha = 0.18f), Offset(x, y), Size(kw, rowH), CornerRadius(radius), style = androidx.compose.ui.graphics.drawscope.Stroke(width = 2f))
+            val kh = rowH - lip
+            if (lip > 0f) drawRoundRect(color.copy(alpha = 1f).let { Color(it.red * 0.7f, it.green * 0.7f, it.blue * 0.7f, 1f) }, Offset(x, y + lip), Size(kw, kh), CornerRadius(radius))
+            drawRoundRect(if (filled) color else color.copy(alpha = 0.35f), Offset(x, y), Size(kw, kh), CornerRadius(radius))
+            if (strokeW > 0f) drawRoundRect(strokeColor, Offset(x, y), Size(kw, kh), CornerRadius(radius), style = androidx.compose.ui.graphics.drawscope.Stroke(width = strokeW))
             if (mark) drawRoundRect(
                 colors.ink.copy(alpha = 0.55f),
-                Offset(x + kw * 0.36f, y + rowH * 0.36f),
-                Size(kw * 0.28f, rowH * 0.28f),
-                CornerRadius(rowH * 0.1f)
+                Offset(x + kw * (0.5f - 0.14f * markScale), y + kh * (0.5f - 0.14f * markScale)),
+                Size(kw * 0.28f * markScale, kh * 0.28f * markScale),
+                CornerRadius(kh * 0.1f)
             )
         }
         fun letters(row: Int, count: Int, inset: Float) {
@@ -380,14 +433,16 @@ fun KeyboardPreview(colors: PreviewColors, modifier: Modifier = Modifier, border
             val start = pad + inset + ((w - pad * 2 - inset * 2) - rowWidth) / 2f
             for (i in 0 until count) key(start + i * (kw + gap), y, kw, colors.key, true)
         }
-        letters(0, 10, 0f)
-        letters(1, 9, 0f)
+        val first = if (numberRow) 1 else 0
+        if (numberRow) letters(0, 10, 0f)
+        letters(first, 10, 0f)
+        letters(first + 1, 9, 0f)
         val kw = (w - pad * 2 - gap * 9) / 10f
-        val y3 = top + (rowH + gap) * 2
+        val y3 = top + (rowH + gap) * (first + 2)
         key(pad, y3, kw * 1.4f, colors.function, false)
-        letters(2, 7, kw * 1.4f + gap)
+        letters(first + 2, 7, kw * 1.4f + gap)
         key(w - pad - kw * 1.4f, y3, kw * 1.4f, colors.function, false)
-        val y4 = top + (rowH + gap) * 3
+        val y4 = top + (rowH + gap) * (first + 3)
         key(pad, y4, kw * 1.4f, colors.function, false)
         key(pad + kw * 1.4f + gap, y4, kw, colors.function, false)
         val spaceStart = pad + kw * 2.4f + gap * 2
@@ -405,7 +460,8 @@ fun ThemeSwatch(
     colors: PreviewColors,
     selected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    shape: PreviewShape? = null,
 ) {
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
@@ -419,7 +475,7 @@ fun ThemeSwatch(
                 )
                 .clickable(role = Role.RadioButton, onClick = onClick)
         ) {
-            KeyboardPreview(colors, Modifier.fillMaxSize())
+            KeyboardPreview(colors, Modifier.fillMaxSize(), shape = shape)
             if (selected) {
                 Box(
                     Modifier.align(Alignment.TopEnd).padding(6.dp).size(24.dp).clip(CircleShape).background(PP.Signal),
@@ -436,5 +492,108 @@ fun ThemeSwatch(
         }
         Spacer(Modifier.height(6.dp))
         Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+    }
+}
+
+@Composable
+fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .padding(vertical = 4.dp),
+        content = content
+    )
+}
+
+@Composable
+fun RowDivider() {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .padding(start = 72.dp, end = 16.dp)
+            .height(1.dp)
+            .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+    )
+}
+
+@Composable
+fun SettingsRow(
+    title: String,
+    subtitle: String?,
+    icon: Int?,
+    onClick: (() -> Unit)?,
+    trailing: @Composable () -> Unit
+) {
+    val darkMode = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val iconFill = if (darkMode) Color(0xFF3A1708) else PP.SignalSoft
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (icon != null) {
+            Box(Modifier.size(40.dp).clip(CircleShape).background(iconFill), contentAlignment = Alignment.Center) {
+                Icon(painterResource(icon), contentDescription = null, tint = PP.Signal, modifier = Modifier.size(22.dp))
+            }
+            Spacer(Modifier.width(16.dp))
+        }
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+            if (subtitle != null) {
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        Spacer(Modifier.width(12.dp))
+        trailing()
+    }
+}
+
+@Composable
+fun SwitchRow(title: String, subtitle: String?, icon: Int?, checked: Boolean, onChange: (Boolean) -> Unit) {
+    SettingsRow(title, subtitle, icon, { onChange(!checked) }) {
+        androidx.compose.material3.Switch(
+            checked = checked,
+            onCheckedChange = null,
+            colors = androidx.compose.material3.SwitchDefaults.colors(
+                checkedThumbColor = Color.White,
+                checkedTrackColor = PP.Signal,
+                checkedBorderColor = PP.Signal,
+                uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                uncheckedBorderColor = MaterialTheme.colorScheme.outline
+            )
+        )
+    }
+}
+
+@Composable
+fun ChoiceRow(title: String, subtitle: String?, icon: Int?, selected: Boolean, onClick: () -> Unit) {
+    SettingsRow(title, subtitle, icon, onClick) {
+        androidx.compose.material3.RadioButton(
+            selected = selected,
+            onClick = null,
+            colors = androidx.compose.material3.RadioButtonDefaults.colors(
+                selectedColor = PP.Signal,
+                unselectedColor = MaterialTheme.colorScheme.outline
+            )
+        )
+    }
+}
+
+@Composable
+fun ValueRow(title: String, subtitle: String?, value: String, icon: Int?, onClick: () -> Unit) {
+    SettingsRow(title, subtitle, icon, onClick) {
+        Text(
+            value,
+            style = MaterialTheme.typography.labelLarge,
+            color = PP.Signal,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.widthIn(max = 140.dp)
+        )
     }
 }

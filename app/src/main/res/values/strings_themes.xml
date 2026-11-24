@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pp_theme_midnight">Midnight</string>
+    <string name="pp_theme_sunset">Sunset</string>
+    <string name="pp_theme_mint">Mint</string>
+    <string name="pp_theme_lavender">Lavender</string>
+    <string name="pp_theme_candy">Candy</string>
+    <string name="pp_theme_neon">Neon</string>
+    <string name="pp_theme_mono">Mono</string>
+    <string name="pp_theme_coffee">Coffee</string>
+    <string name="pp_theme_rose">Rose</string>
+    <string name="pp_theme_slate">Slate</string>
+    <string name="pp_theme_aurora">Aurora</string>
+    <string name="pp_theme_gold">Gold</string>
+</resources>

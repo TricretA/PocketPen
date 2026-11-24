@@ -1,20 +1,18 @@
 package helium314.keyboard.voice
 
 import android.Manifest
-import android.app.AlertDialog
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Bundle
 import android.os.Handler
-import android.os.IBinder
 import android.os.Looper
 import android.os.SystemClock
-import android.view.Gravity
-import android.view.View
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
 import android.view.ViewGroup
-import android.view.WindowManager
-import android.widget.Button
-import android.widget.LinearLayout
-import android.widget.TextView
+import android.widget.RelativeLayout
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import helium314.keyboard.ai.AiAction
@@ -26,23 +24,16 @@ import helium314.keyboard.keyboard.KeyboardSwitcher
 import helium314.keyboard.latin.LatinIME
 import helium314.keyboard.latin.R
 import helium314.keyboard.latin.utils.InputTypeUtils
-import helium314.keyboard.latin.utils.getPlatformDialogThemeContext
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 
 object VoiceLauncher {
+    private var session: VoiceSession? = null
+    private var bar: VoiceBar? = null
+
     @JvmStatic
     fun handle(ime: LatinIME): Boolean {
-        if (VoiceSettings.engine(ime) != VoiceEngine.GROQ) return false
-        if (!Connectivity.isOnline(ime)) {
-            Toast.makeText(ime, R.string.voice_offline_using_device, Toast.LENGTH_SHORT).show()
-            return false
-        }
-        if (AiKeyStore.load(ime, AiProvider.GROQ) == null) {
-            Toast.makeText(ime, R.string.voice_no_key_using_device, Toast.LENGTH_LONG).show()
-            return false
-        }
         val inputType = ime.currentInputEditorInfo?.inputType ?: 0
         if (InputTypeUtils.isAnyPasswordInputType(inputType)) {
             Toast.makeText(ime, R.string.voice_error_password, Toast.LENGTH_SHORT).show()
@@ -54,164 +45,241 @@ object VoiceLauncher {
             Toast.makeText(ime, R.string.voice_permission_needed, Toast.LENGTH_LONG).show()
             return true
         }
-        val windowToken = KeyboardSwitcher.getInstance().mainKeyboardView?.windowToken ?: return false
-        ime.showOptionsDialog(VoicePanel(ime).create(windowToken))
+        val strip = KeyboardSwitcher.getInstance().suggestionStrip ?: return false
+        val useGroq = VoiceSettings.engine(ime) == VoiceEngine.GROQ
+            && Connectivity.isOnline(ime)
+            && AiKeyStore.load(ime, AiProvider.GROQ) != null
+        if (!useGroq && !SpeechRecognizer.isRecognitionAvailable(ime)) return false
+        cancel()
+        val newBar = VoiceBar(ime, { cancel() }, { session?.onMic() })
+        strip.addView(newBar, RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
+        bar = newBar
+        val created = if (useGroq) GroqSession(ime, newBar, { cancel() }, { fallToDevice(ime) }) else DeviceSession(ime, newBar) { cancel() }
+        session = created
+        created.start()
         return true
+    }
+
+    @JvmStatic
+    fun cancel() {
+        session?.cancel()
+        session = null
+        bar?.let { (it.parent as? ViewGroup)?.removeView(it) }
+        bar = null
+    }
+
+    private fun fallToDevice(ime: LatinIME) {
+        val currentBar = bar ?: return
+        session?.cancel()
+        if (!SpeechRecognizer.isRecognitionAvailable(ime)) {
+            currentBar.setListening(false)
+            currentBar.setStatus(ime.getString(R.string.vz_error))
+            session = null
+            return
+        }
+        val device = DeviceSession(ime, currentBar) { cancel() }
+        session = device
+        device.start()
     }
 }
 
-private class VoicePanel(private val ime: LatinIME) {
-    private val context = getPlatformDialogThemeContext(ime)
+private fun commitVoiceText(ime: LatinIME, text: String) {
+    val connection = ime.currentInputConnection ?: return
+    val before = connection.getTextBeforeCursor(1, 0)
+    val prefix = if (!before.isNullOrEmpty() && !before[0].isWhitespace()) " " else ""
+    connection.beginBatchEdit()
+    connection.finishComposingText()
+    connection.commitText(prefix + text, 1)
+    connection.endBatchEdit()
+}
+
+private abstract class VoiceSession(val ime: LatinIME, val bar: VoiceBar) {
+    abstract fun start()
+    abstract fun onMic()
+    abstract fun cancel()
+    protected fun text(res: Int): String = ime.getString(res)
+}
+
+private class DeviceSession(ime: LatinIME, bar: VoiceBar, private val finish: () -> Unit) : VoiceSession(ime, bar) {
+    private var recognizer: SpeechRecognizer? = null
+    private var listening = false
+
+    private val listener = object : RecognitionListener {
+        override fun onReadyForSpeech(params: Bundle?) {
+            listening = true
+            bar.setListening(true)
+            bar.setStatus(text(R.string.vz_speak_now))
+        }
+
+        override fun onBeginningOfSpeech() {
+            bar.setStatus(text(R.string.vz_listening))
+        }
+
+        override fun onRmsChanged(rmsdB: Float) {
+            bar.setLevel((rmsdB + 2f) / 12f)
+        }
+
+        override fun onBufferReceived(buffer: ByteArray?) {}
+
+        override fun onEndOfSpeech() {
+            listening = false
+            bar.setListening(false)
+            bar.setStatus(text(R.string.vz_transcribing))
+        }
+
+        override fun onError(error: Int) {
+            listening = false
+            bar.setListening(false)
+            val message = when (error) {
+                SpeechRecognizer.ERROR_NO_MATCH, SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> R.string.vz_didnt_catch
+                else -> R.string.vz_error
+            }
+            bar.setStatus(text(message))
+        }
+
+        override fun onResults(results: Bundle?) {
+            listening = false
+            val best = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()?.trim().orEmpty()
+            if (best.isEmpty()) {
+                bar.setListening(false)
+                bar.setStatus(text(R.string.vz_didnt_catch))
+                return
+            }
+            commitVoiceText(ime, best)
+            finish()
+        }
+
+        override fun onPartialResults(partialResults: Bundle?) {
+            val partial = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
+            if (!partial.isNullOrBlank()) bar.setStatus(partial)
+        }
+
+        override fun onEvent(eventType: Int, params: Bundle?) {}
+    }
+
+    override fun start() {
+        release()
+        bar.setListening(false)
+        bar.setStatus(text(R.string.vz_getting_ready))
+        val created = SpeechRecognizer.createSpeechRecognizer(ime)
+        recognizer = created
+        created.setRecognitionListener(listener)
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+            .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            .putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+            .putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, ime.packageName)
+        val language = VoiceSettings.language(ime)
+        if (language.isNotBlank()) intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, language)
+        created.startListening(intent)
+    }
+
+    override fun onMic() {
+        if (listening) recognizer?.stopListening() else start()
+    }
+
+    override fun cancel() {
+        release()
+    }
+
+    private fun release() {
+        listening = false
+        recognizer?.let {
+            it.setRecognitionListener(null)
+            it.cancel()
+            it.destroy()
+        }
+        recognizer = null
+    }
+}
+
+private class GroqSession(
+    ime: LatinIME,
+    bar: VoiceBar,
+    private val finish: () -> Unit,
+    private val fallback: () -> Unit,
+) : VoiceSession(ime, bar) {
     private val handler = Handler(Looper.getMainLooper())
     private val executor: ExecutorService = Executors.newSingleThreadExecutor()
     private val recorder = VoiceRecorder(ime)
     private var pending: Future<*>? = null
     private var generation = 0
-    private var recordingStart = 0L
     private var recording = false
-    private var transcript: String? = null
-    private lateinit var dialog: AlertDialog
-    private lateinit var indicator: RecordingIndicatorView
-    private lateinit var timerView: TextView
-    private lateinit var statusView: TextView
-    private lateinit var transcriptView: TextView
-    private lateinit var stopButton: Button
-    private lateinit var insertButton: Button
-    private lateinit var cleanupButton: Button
-    private lateinit var againButton: Button
-    private lateinit var deviceButton: Button
-
-    private fun dp(value: Int) = (value * context.resources.displayMetrics.density).toInt()
+    private var working = false
+    private var heardSpeech = false
+    private var recordingStart = 0L
+    private var lastLoud = 0L
 
     private val ticker = object : Runnable {
         override fun run() {
             if (!recording) return
-            val elapsed = SystemClock.uptimeMillis() - recordingStart
-            val seconds = (elapsed / 1000).toInt()
-            timerView.text = String.format("%d:%02d", seconds / 60, seconds % 60)
-            indicator.setLevel(recorder.amplitude() / LEVEL_SCALE)
-            if (elapsed >= VoiceRecorder.MAX_DURATION_MS) stopRecording()
-            else handler.postDelayed(this, TICK_MS)
+            val now = SystemClock.uptimeMillis()
+            val elapsed = now - recordingStart
+            val amplitude = recorder.amplitude()
+            bar.setLevel(amplitude / LEVEL_SCALE)
+            if (amplitude > SPEECH_AMPLITUDE) {
+                if (!heardSpeech) bar.setStatus(text(R.string.vz_listening))
+                heardSpeech = true
+                lastLoud = now
+            }
+            when {
+                elapsed >= VoiceRecorder.MAX_DURATION_MS -> stopAndSend()
+                heardSpeech && now - lastLoud > SILENCE_MS -> stopAndSend()
+                !heardSpeech && elapsed > NO_SPEECH_MS -> giveUp()
+                else -> handler.postDelayed(this, TICK_MS)
+            }
         }
     }
 
-    fun create(windowToken: IBinder): AlertDialog {
-        val root = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER_HORIZONTAL
-            setPadding(dp(20), dp(8), dp(20), dp(4))
-        }
-        indicator = RecordingIndicatorView(context)
-        root.addView(indicator, LinearLayout.LayoutParams(dp(140), dp(140)))
-        timerView = TextView(context).apply {
-            textSize = 20f
-            gravity = Gravity.CENTER
-            text = "0:00"
-        }
-        root.addView(timerView)
-        statusView = TextView(context).apply {
-            textSize = 14f
-            gravity = Gravity.CENTER
-            setPadding(0, dp(4), 0, dp(8))
-        }
-        root.addView(statusView)
-        transcriptView = TextView(context).apply {
-            textSize = 16f
-            setTextIsSelectable(true)
-            visibility = View.GONE
-            setPadding(0, dp(4), 0, dp(8))
-        }
-        root.addView(transcriptView)
-
-        stopButton = button(R.string.voice_stop) { stopRecording() }
-        insertButton = button(R.string.voice_insert) { insertTranscript() }
-        cleanupButton = button(R.string.voice_cleanup) { cleanupTranscript() }
-        againButton = button(R.string.voice_again) { startRecording() }
-        deviceButton = button(R.string.voice_use_device) {
-            dialog.dismiss()
-            ime.switchToDeviceVoiceInput()
-        }
-        listOf(stopButton, insertButton, cleanupButton, againButton, deviceButton).forEach {
-            root.addView(it, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
-        }
-
-        dialog = AlertDialog.Builder(context)
-            .setTitle(R.string.voice_title)
-            .setView(android.widget.ScrollView(context).apply { addView(root) })
-            .setNegativeButton(R.string.ai_close, null)
-            .create()
-        dialog.setOnShowListener { startRecording() }
-        dialog.setOnDismissListener {
-            generation++
-            recording = false
-            handler.removeCallbacks(ticker)
-            pending?.cancel(true)
-            recorder.cancel()
-            executor.shutdownNow()
-        }
-        val window = dialog.window
-        val layoutParams = window?.attributes
-        layoutParams?.token = windowToken
-        layoutParams?.type = WindowManager.LayoutParams.TYPE_APPLICATION_ATTACHED_DIALOG
-        window?.attributes = layoutParams
-        window?.addFlags(WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM)
-        return dialog
-    }
-
-    private fun button(textRes: Int, onClick: () -> Unit) = Button(context).apply {
-        text = ime.getString(textRes)
-        isAllCaps = false
-        visibility = View.GONE
-        setOnClickListener { onClick() }
-    }
-
-    private fun showButtons(vararg visible: Button) {
-        listOf(stopButton, insertButton, cleanupButton, againButton, deviceButton).forEach {
-            it.visibility = if (it in visible) View.VISIBLE else View.GONE
-        }
-    }
-
-    private fun startRecording() {
+    override fun start() {
         generation++
-        transcript = null
-        transcriptView.visibility = View.GONE
+        working = false
+        heardSpeech = false
+        bar.setStatus(text(R.string.vz_getting_ready))
         try {
             recorder.start()
         } catch (e: Exception) {
-            indicator.setRunning(false)
-            statusView.text = ime.getString(R.string.voice_error_start, e.message ?: e.javaClass.simpleName)
-            showButtons(againButton, deviceButton)
+            bar.setListening(false)
+            bar.setStatus(text(R.string.vz_start_error))
             return
         }
         recording = true
         recordingStart = SystemClock.uptimeMillis()
-        indicator.setRunning(true)
-        statusView.text = ime.getString(R.string.voice_recording)
-        showButtons(stopButton)
+        lastLoud = recordingStart
+        bar.setListening(true)
+        bar.setStatus(text(R.string.vz_speak_now))
         handler.post(ticker)
     }
 
-    private fun stopRecording() {
+    override fun onMic() {
+        if (recording) stopAndSend() else if (!working) start()
+    }
+
+    private fun giveUp() {
+        recording = false
+        handler.removeCallbacks(ticker)
+        recorder.cancel()
+        bar.setListening(false)
+        bar.setStatus(text(R.string.vz_didnt_catch))
+    }
+
+    private fun stopAndSend() {
         if (!recording) return
         recording = false
         handler.removeCallbacks(ticker)
-        indicator.setRunning(false)
-        indicator.setLevel(0f)
+        bar.setListening(false)
         val file = recorder.stop()
-        if (file == null || file.length() == 0L) {
-            statusView.text = ime.getString(R.string.voice_too_short)
-            showButtons(againButton)
+        if (file == null || file.length() < MIN_BYTES) {
+            bar.setStatus(text(R.string.vz_didnt_catch))
             return
         }
-        statusView.text = ime.getString(R.string.voice_transcribing)
-        showButtons()
+        working = true
+        bar.setStatus(text(R.string.vz_transcribing))
         val id = ++generation
         val appContext = ime.applicationContext
         pending = executor.submit(Runnable {
             val outcome = runCatching {
-                val apiKey = AiKeyStore.load(appContext, AiProvider.GROQ)
-                    ?: throw IllegalStateException(appContext.getString(R.string.voice_no_key_using_device))
-                var text = GroqSpeech.transcribe(
+                val apiKey = AiKeyStore.load(appContext, AiProvider.GROQ) ?: throw AiNetworkException("no key")
+                var result = GroqSpeech.transcribe(
                     apiKey,
                     file,
                     VoiceSettings.model(appContext),
@@ -219,62 +287,42 @@ private class VoicePanel(private val ime: LatinIME) {
                     VoiceSettings.vocabulary(appContext)
                 )
                 if (VoiceSettings.aiCleanup(appContext)) {
-                    text = runCatching { AiRunner.run(appContext, AiAction.FIX_GRAMMAR, text) }.getOrDefault(text)
+                    result = runCatching { AiRunner.run(appContext, AiAction.FIX_GRAMMAR, result) }.getOrDefault(result)
                 }
-                text
+                result
             }
             file.delete()
-            handler.post { if (id == generation) showTranscript(outcome) }
-        })
-    }
-
-    private fun showTranscript(outcome: Result<String>) {
-        outcome.onSuccess { text ->
-            transcript = text
-            transcriptView.text = text
-            transcriptView.visibility = View.VISIBLE
-            statusView.text = ime.getString(R.string.voice_review)
-            showButtons(insertButton, cleanupButton, againButton)
-        }
-        outcome.onFailure { error ->
-            statusView.text = error.message ?: error.javaClass.simpleName
-            if (error is AiNetworkException) showButtons(againButton, deviceButton) else showButtons(againButton)
-        }
-    }
-
-    private fun cleanupTranscript() {
-        val text = transcript ?: return
-        val id = ++generation
-        val appContext = ime.applicationContext
-        statusView.text = ime.getString(R.string.ai_working)
-        showButtons()
-        pending = executor.submit(Runnable {
-            val outcome = runCatching { AiRunner.run(appContext, AiAction.FIX_GRAMMAR, text) }
             handler.post {
                 if (id != generation) return@post
+                working = false
                 outcome.onSuccess {
-                    transcript = it
-                    transcriptView.text = it
-                    statusView.text = ime.getString(R.string.voice_review)
+                    commitVoiceText(ime, it)
+                    finish()
                 }
-                outcome.onFailure { statusView.text = it.message ?: it.javaClass.simpleName }
-                showButtons(insertButton, cleanupButton, againButton)
+                outcome.onFailure {
+                    if (it is AiNetworkException) fallback()
+                    else bar.setStatus(it.message ?: text(R.string.vz_error))
+                }
             }
         })
     }
 
-    private fun insertTranscript() {
-        val text = transcript ?: return
-        val connection = ime.currentInputConnection ?: return
-        connection.beginBatchEdit()
-        connection.finishComposingText()
-        connection.commitText(text, 1)
-        connection.endBatchEdit()
-        dialog.dismiss()
+    override fun cancel() {
+        generation++
+        recording = false
+        working = false
+        handler.removeCallbacksAndMessages(null)
+        pending?.cancel(true)
+        recorder.cancel()
+        executor.shutdownNow()
     }
 
     companion object {
         private const val TICK_MS = 80L
         private const val LEVEL_SCALE = 12000f
+        private const val SPEECH_AMPLITUDE = 2500
+        private const val SILENCE_MS = 1800L
+        private const val NO_SPEECH_MS = 8000L
+        private const val MIN_BYTES = 1500L
     }
 }

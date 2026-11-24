@@ -1,6 +1,23 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package helium314.keyboard.settings.screens
 
+import androidx.compose.runtime.mutableStateOf as scMutableStateOf
+import helium314.keyboard.settings.ui.PocketScreen as ScPocketScreen
+import helium314.keyboard.settings.ui.LivePreview
+import helium314.keyboard.settings.ui.PrefSwitch
+import helium314.keyboard.settings.ui.PrefChoice
+import helium314.keyboard.settings.ui.PrefIntChoice
+import helium314.keyboard.settings.ui.ScSection
+import helium314.keyboard.settings.ui.ScCollapsible
+import helium314.keyboard.settings.ui.EmbeddedSetting
+import helium314.keyboard.settings.ui.RowDivider
+import helium314.keyboard.settings.ui.SettingsCard
+import helium314.keyboard.settings.ui.SettingsRow
+import helium314.keyboard.settings.ui.ValueRow
+import helium314.keyboard.settings.ui.SectionLabel
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+
 import android.content.Context
 import android.media.AudioManager
 import androidx.compose.material3.Surface
@@ -37,58 +54,88 @@ import helium314.keyboard.latin.utils.previewDark
 fun PreferencesScreen(
     onClickBack: () -> Unit,
 ) {
-    val prefs = LocalContext.current.prefs()
-    val b = (LocalContext.current.getActivity() as? SettingsActivity)?.prefChanged?.collectAsState()
-    if ((b?.value ?: 0) < 0)
-        Log.v("irrelevant", "stupid way to trigger recomposition on preference change")
-    val clipboardHistoryEnabled = prefs.getBoolean(Settings.PREF_ENABLE_CLIPBOARD_HISTORY, Defaults.PREF_ENABLE_CLIPBOARD_HISTORY)
-    val items = listOf(
-        R.string.settings_category_input,
-        Settings.PREF_SHOW_HINTS,
-        if (prefs.getBoolean(Settings.PREF_SHOW_HINTS, Defaults.PREF_SHOW_HINTS))
-            Settings.PREF_POPUP_KEYS_HINT_ORDER else null,
-        Settings.PREF_POPUP_KEYS_ORDER,
-        Settings.PREF_SHOW_POPUP_HINTS,
-        Settings.PREF_SHOW_TLD_POPUP_KEYS,
-        Settings.PREF_POPUP_ON,
-        if (AudioAndHapticFeedbackManager.getInstance().hasVibrator())
-            Settings.PREF_VIBRATE_ON else null,
-        if (prefs.getBoolean(Settings.PREF_VIBRATE_ON, Defaults.PREF_VIBRATE_ON))
-            Settings.PREF_VIBRATION_DURATION_SETTINGS else null,
-        if (prefs.getBoolean(Settings.PREF_VIBRATE_ON, Defaults.PREF_VIBRATE_ON))
-            Settings.PREF_VIBRATE_IN_DND_MODE else null,
-        Settings.PREF_SOUND_ON,
-        if (prefs.getBoolean(Settings.PREF_SOUND_ON, Defaults.PREF_SOUND_ON))
-            Settings.PREF_KEYPRESS_SOUND_VOLUME else null,
-        Settings.PREF_SAVE_SUBTYPE_PER_APP,
-        Settings.PREF_SHOW_EMOJI_DESCRIPTIONS,
-        R.string.settings_category_additional_keys,
-        Settings.PREF_SHOW_NUMBER_ROW,
-        if (SubtypeSettings.getEnabledSubtypes(true).any { it.locale().language in localesWithLocalizedNumberRow })
-            Settings.PREF_LOCALIZED_NUMBER_ROW else null,
-        if (prefs.getBoolean(Settings.PREF_SHOW_HINTS, Defaults.PREF_SHOW_HINTS)
-            && prefs.getBoolean(Settings.PREF_SHOW_NUMBER_ROW, Defaults.PREF_SHOW_NUMBER_ROW))
-            Settings.PREF_SHOW_NUMBER_ROW_HINTS else null,
-        if (!prefs.getBoolean(Settings.PREF_SHOW_NUMBER_ROW, Defaults.PREF_SHOW_NUMBER_ROW))
-            Settings.PREF_SHOW_NUMBER_ROW_IN_SYMBOLS else null,
-        Settings.PREF_SHOW_LANGUAGE_SWITCH_KEY,
-        Settings.PREF_LANGUAGE_SWITCH_KEY,
-        Settings.PREF_SHOW_EMOJI_KEY,
-        Settings.PREF_SHOW_DPAD_KEY,
-        Settings.PREF_REMOVE_REDUNDANT_POPUPS,
-        R.string.settings_category_clipboard_history,
-        Settings.PREF_ENABLE_CLIPBOARD_HISTORY,
-        if (clipboardHistoryEnabled) Settings.PREF_CLIPBOARD_HISTORY_RETENTION_TIME else null,
-        if (clipboardHistoryEnabled) Settings.PREF_CLIPBOARD_HISTORY_PINNED_FIRST else null,
-        if (clipboardHistoryEnabled) Settings.PREF_CLIPBOARD_USE_FILES else null,
-        if (clipboardHistoryEnabled && prefs.getBoolean(Settings.PREF_CLIPBOARD_USE_FILES, Defaults.PREF_CLIPBOARD_USE_FILES))
-            Settings.PREF_CLIPBOARD_FILES_SIZE_LIMIT else null,
-    )
-    SearchSettingsScreen(
-        onClickBack = onClickBack,
-        title = stringResource(R.string.settings_screen_preferences),
-        settings = items
-    )
+    val ctx = LocalContext.current
+    val prefs = ctx.prefs()
+    var clipboardOn by androidx.compose.runtime.remember {
+        androidx.compose.runtime.mutableStateOf(prefs.getBoolean(Settings.PREF_ENABLE_CLIPBOARD_HISTORY, Defaults.PREF_ENABLE_CLIPBOARD_HISTORY))
+    }
+    ScPocketScreen(stringResource(R.string.pp_options), onClickBack, footer = { LivePreview() }) {
+        ScSection(stringResource(R.string.sc_keys)) {
+            PrefSwitch(
+                Settings.PREF_SHOW_NUMBER_ROW, Defaults.PREF_SHOW_NUMBER_ROW,
+                stringResource(R.string.sc_number_row), stringResource(R.string.sc_number_row_sub), R.drawable.ic_pp_keyboard
+            ) { KeyboardSwitcher.getInstance().setThemeNeedsReload() }
+            RowDivider()
+            PrefSwitch(
+                Settings.PREF_SHOW_EMOJI_KEY, Defaults.PREF_SHOW_EMOJI_KEY,
+                stringResource(R.string.sc_emoji_key), stringResource(R.string.sc_emoji_key_sub), R.drawable.ic_pp_emoji
+            ) { KeyboardSwitcher.getInstance().reloadKeyboard() }
+            RowDivider()
+            PrefSwitch(
+                Settings.PREF_SHOW_LANGUAGE_SWITCH_KEY, Defaults.PREF_SHOW_LANGUAGE_SWITCH_KEY,
+                stringResource(R.string.sc_lang_key), stringResource(R.string.sc_lang_key_sub), R.drawable.ic_settings_languages
+            ) { KeyboardSwitcher.getInstance().reloadKeyboard() }
+            RowDivider()
+            PrefSwitch(
+                Settings.PREF_SHOW_DPAD_KEY, Defaults.PREF_SHOW_DPAD_KEY,
+                stringResource(R.string.sc_arrow_keys), stringResource(R.string.sc_arrow_keys_sub), R.drawable.ic_pp_next
+            ) { KeyboardSwitcher.getInstance().reloadKeyboard() }
+            RowDivider()
+            PrefSwitch(
+                Settings.PREF_SHOW_HINTS, Defaults.PREF_SHOW_HINTS,
+                stringResource(R.string.sc_hints), stringResource(R.string.sc_hints_sub), R.drawable.ic_pp_dot
+            ) { KeyboardSwitcher.getInstance().reloadKeyboard() }
+        }
+        ScSection(stringResource(R.string.sc_clipboard)) {
+            PrefSwitch(
+                Settings.PREF_ENABLE_CLIPBOARD_HISTORY, Defaults.PREF_ENABLE_CLIPBOARD_HISTORY,
+                stringResource(R.string.sc_clip_on), stringResource(R.string.sc_clip_on_sub), R.drawable.ic_pp_paste
+            ) {
+                clipboardOn = it
+                if (!it) ClipboardDao.getInstance(ctx)?.clearNonPinned()
+            }
+            if (clipboardOn) {
+                RowDivider()
+                PrefIntChoice(
+                    Settings.PREF_CLIPBOARD_HISTORY_RETENTION_TIME, Defaults.PREF_CLIPBOARD_HISTORY_RETENTION_TIME,
+                    listOf(
+                        stringResource(R.string.clipboard_retention_1_hour) to 60,
+                        stringResource(R.string.clipboard_retention_1_day) to 1440,
+                        stringResource(R.string.clipboard_retention_7_days) to 10080,
+                        stringResource(R.string.clipboard_retention_30_days) to 43200,
+                        stringResource(R.string.clipboard_retention_90_days) to 129600,
+                        stringResource(R.string.clipboard_retention_never) to 0,
+                    ),
+                    stringResource(R.string.sc_keep_for), stringResource(R.string.sc_keep_for_sub), R.drawable.ic_pp_clock
+                ) { ClipboardDao.getInstance(ctx)?.clearOldClips(true) }
+                RowDivider()
+                PrefSwitch(
+                    Settings.PREF_CLIPBOARD_HISTORY_PINNED_FIRST, Defaults.PREF_CLIPBOARD_HISTORY_PINNED_FIRST,
+                    stringResource(R.string.sc_pinned_first), stringResource(R.string.sc_pinned_first_sub), R.drawable.ic_pp_pin
+                )
+            }
+        }
+        ScSection(stringResource(R.string.sc_apps)) {
+            PrefSwitch(
+                Settings.PREF_SAVE_SUBTYPE_PER_APP, Defaults.PREF_SAVE_SUBTYPE_PER_APP,
+                stringResource(R.string.sc_per_app), stringResource(R.string.sc_per_app_sub), R.drawable.ic_pp_apps
+            )
+        }
+        ScCollapsible(stringResource(R.string.sc_more), stringResource(R.string.sc_more_sub), R.drawable.ic_pp_all) {
+            EmbeddedSetting(Settings.PREF_LOCALIZED_NUMBER_ROW)
+            EmbeddedSetting(Settings.PREF_SHOW_NUMBER_ROW_IN_SYMBOLS)
+            EmbeddedSetting(Settings.PREF_SHOW_NUMBER_ROW_HINTS)
+            EmbeddedSetting(Settings.PREF_LANGUAGE_SWITCH_KEY)
+            EmbeddedSetting(Settings.PREF_SHOW_POPUP_HINTS)
+            EmbeddedSetting(Settings.PREF_POPUP_KEYS_HINT_ORDER)
+            EmbeddedSetting(Settings.PREF_POPUP_KEYS_ORDER)
+            EmbeddedSetting(Settings.PREF_SHOW_TLD_POPUP_KEYS)
+            EmbeddedSetting(Settings.PREF_REMOVE_REDUNDANT_POPUPS)
+            EmbeddedSetting(Settings.PREF_SHOW_EMOJI_DESCRIPTIONS)
+            EmbeddedSetting(Settings.PREF_CLIPBOARD_USE_FILES)
+            EmbeddedSetting(Settings.PREF_CLIPBOARD_FILES_SIZE_LIMIT)
+        }
+    }
 }
 
 fun createPreferencesSettings(context: Context) = listOf(

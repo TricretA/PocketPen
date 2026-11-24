@@ -16,4 +16,15 @@
     <string name="clipboard_manager_retention_days">%1$d days</string>
     <string name="clipboard_manager_retention_hours">%1$d hours</string>
     <string name="clipboard_manager_retention_minutes">%1$d minutes</string>
+    <string name="clipboard_tab_images">Images</string>
+    <string name="clipboard_section_recent">Recent</string>
+    <string name="clipboard_section_pinned">Pinned</string>
+    <string name="clipboard_pin">Pin</string>
+    <string name="clipboard_unpin">Unpin</string>
+    <string name="clipboard_paste">Paste</string>
+    <string name="clipboard_delete">Delete</string>
+    <string name="clipboard_screenshot">Screenshot</string>
+    <string name="clipboard_allow_screenshots">Allow screenshots</string>
+    <string name="clipboard_screenshots_allowed">Screenshots will appear in your clipboard</string>
+    <string name="clipboard_screenshots_denied">Screenshot access was not allowed</string>
 </resources>

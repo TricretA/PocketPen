@@ -1,6 +1,21 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package helium314.keyboard.settings.screens
 
+import androidx.compose.runtime.mutableStateOf as scMutableStateOf
+import helium314.keyboard.settings.ui.PocketScreen as ScPocketScreen
+import helium314.keyboard.settings.ui.LivePreview
+import helium314.keyboard.settings.ui.PrefSwitch
+import helium314.keyboard.settings.ui.PrefChoice
+import helium314.keyboard.settings.ui.PrefIntChoice
+import helium314.keyboard.settings.ui.ScSection
+import helium314.keyboard.settings.ui.ScCollapsible
+import helium314.keyboard.settings.ui.EmbeddedSetting
+import helium314.keyboard.settings.ui.RowDivider
+import helium314.keyboard.settings.ui.SettingsCard
+import helium314.keyboard.settings.ui.SettingsRow
+import helium314.keyboard.settings.ui.ValueRow
+import helium314.keyboard.settings.ui.SectionLabel
+
 import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
@@ -55,50 +70,53 @@ fun AdvancedSettingsScreen(
     onClickBack: () -> Unit,
 ) {
     val prefs = LocalContext.current.prefs()
-    val b = (LocalContext.current.getActivity() as? SettingsActivity)?.prefChanged?.collectAsState()
-    if ((b?.value ?: 0) < 0)
-        Log.v("irrelevant", "stupid way to trigger recomposition on preference change")
-    val items = listOf(
-        Settings.PREF_ALWAYS_INCOGNITO_MODE,
-        Settings.PREF_KEY_LONGPRESS_TIMEOUT,
-        Settings.PREF_SPACE_HORIZONTAL_SWIPE,
-        Settings.PREF_SPACE_VERTICAL_SWIPE,
-        if (Settings.readHorizontalSpaceSwipe(prefs) == KeyboardActionListener.SwipeAction.SWITCH_LANGUAGE
-            || Settings.readVerticalSpaceSwipe(prefs) == KeyboardActionListener.SwipeAction.SWITCH_LANGUAGE)
-            Settings.PREF_LANGUAGE_SWIPE_DISTANCE else null,
-        if (Settings.readVerticalSpaceSwipe(prefs) == KeyboardActionListener.SwipeAction.TOUCHPAD_MODE)
-            Settings.PREF_TOUCHPAD_SENSITIVITY else null,
-        if (Settings.readVerticalSpaceSwipe(prefs) == KeyboardActionListener.SwipeAction.TOUCHPAD_MODE)
-            Settings.PREF_TOUCHPAD_EDGE_SCROLL else null,
-        Settings.PREF_DELETE_SWIPE,
-        Settings.PREF_SPACE_TO_CHANGE_LANG,
-        Settings.PREFS_LONG_PRESS_SYMBOLS_FOR_NUMPAD,
-        Settings.PREF_ENABLE_EMOJI_ALT_PHYSICAL_KEY,
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) Settings.PREF_SHOW_SETUP_WIZARD_ICON else null,
-        Settings.PREF_ABC_AFTER_SYMBOL_SPACE,
-        Settings.PREF_ABC_AFTER_NUMPAD_SPACE,
-        Settings.PREF_ABC_AFTER_EMOJI,
-        Settings.PREF_ABC_AFTER_CLIP,
-        Settings.PREF_CUSTOM_CURRENCY_KEY,
-        Settings.PREF_MORE_POPUP_KEYS,
-        Settings.PREF_TIMESTAMP_FORMAT,
-        SettingsWithoutKey.BACKUP_RESTORE,
-        if (BuildConfig.DEBUG || prefs.getBoolean(DebugSettings.PREF_SHOW_DEBUG_SETTINGS, Defaults.PREF_SHOW_DEBUG_SETTINGS))
-            SettingsWithoutKey.DEBUG_SETTINGS else null,
-        R.string.settings_category_experimental,
-        Settings.PREF_EMOJI_MAX_SDK,
-        Settings.PREF_URL_DETECTION,
-        Settings.PREF_ENABLE_HARDWARE_KEYBOARD,
-        if (BuildConfig.BUILD_TYPE != "nouserlib") SettingsWithoutKey.LOAD_GESTURE_LIB else null
-    )
-    SearchSettingsScreen(
-        onClickBack = onClickBack,
-        title = stringResource(R.string.settings_screen_advanced),
-        settings = items
-    )
+    ScPocketScreen(stringResource(R.string.pp_advanced), onClickBack) {
+        ScSection(stringResource(R.string.sc_privacy)) {
+            PrefSwitch(
+                Settings.PREF_ALWAYS_INCOGNITO_MODE, Defaults.PREF_ALWAYS_INCOGNITO_MODE,
+                stringResource(R.string.sc_incognito), stringResource(R.string.sc_incognito_sub), R.drawable.ic_pp_lock
+            )
+        }
+        ScSection(stringResource(R.string.sc_backup)) {
+            EmbeddedSetting(SettingsWithoutKey.BACKUP_RESTORE)
+        }
+        ScCollapsible(stringResource(R.string.sc_gestures), stringResource(R.string.sc_more_sub), R.drawable.ic_pp_all) {
+            EmbeddedSetting(Settings.PREF_KEY_LONGPRESS_TIMEOUT)
+            EmbeddedSetting(Settings.PREF_SPACE_HORIZONTAL_SWIPE)
+            EmbeddedSetting(Settings.PREF_SPACE_VERTICAL_SWIPE)
+            if (Settings.readHorizontalSpaceSwipe(prefs) == KeyboardActionListener.SwipeAction.SWITCH_LANGUAGE
+                || Settings.readVerticalSpaceSwipe(prefs) == KeyboardActionListener.SwipeAction.SWITCH_LANGUAGE)
+                EmbeddedSetting(Settings.PREF_LANGUAGE_SWIPE_DISTANCE)
+            if (Settings.readVerticalSpaceSwipe(prefs) == KeyboardActionListener.SwipeAction.TOUCHPAD_MODE) {
+                EmbeddedSetting(Settings.PREF_TOUCHPAD_SENSITIVITY)
+                EmbeddedSetting(Settings.PREF_TOUCHPAD_EDGE_SCROLL)
+            }
+            EmbeddedSetting(Settings.PREF_DELETE_SWIPE)
+            EmbeddedSetting(Settings.PREF_SPACE_TO_CHANGE_LANG)
+            EmbeddedSetting(Settings.PREFS_LONG_PRESS_SYMBOLS_FOR_NUMPAD)
+            EmbeddedSetting(Settings.PREF_ABC_AFTER_SYMBOL_SPACE)
+            EmbeddedSetting(Settings.PREF_ABC_AFTER_NUMPAD_SPACE)
+            EmbeddedSetting(Settings.PREF_ABC_AFTER_EMOJI)
+            EmbeddedSetting(Settings.PREF_ABC_AFTER_CLIP)
+            EmbeddedSetting(Settings.PREF_CUSTOM_CURRENCY_KEY)
+            EmbeddedSetting(Settings.PREF_MORE_POPUP_KEYS)
+            EmbeddedSetting(Settings.PREF_TIMESTAMP_FORMAT)
+        }
+        ScCollapsible(stringResource(R.string.sc_technical), null, R.drawable.ic_pp_all) {
+            EmbeddedSetting(Settings.PREF_ENABLE_EMOJI_ALT_PHYSICAL_KEY)
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
+                EmbeddedSetting(Settings.PREF_SHOW_SETUP_WIZARD_ICON)
+            EmbeddedSetting(Settings.PREF_EMOJI_MAX_SDK)
+            EmbeddedSetting(Settings.PREF_URL_DETECTION)
+            EmbeddedSetting(Settings.PREF_ENABLE_HARDWARE_KEYBOARD)
+            if (BuildConfig.BUILD_TYPE != "nouserlib")
+                EmbeddedSetting(SettingsWithoutKey.LOAD_GESTURE_LIB)
+            if (BuildConfig.DEBUG || prefs.getBoolean(DebugSettings.PREF_SHOW_DEBUG_SETTINGS, Defaults.PREF_SHOW_DEBUG_SETTINGS))
+                EmbeddedSetting(SettingsWithoutKey.DEBUG_SETTINGS)
+        }
+    }
 }
 
-@SuppressLint("ApplySharedPref")
 fun createAdvancedSettings(context: Context) = listOf(
     Setting(context, Settings.PREF_ALWAYS_INCOGNITO_MODE,
         R.string.incognito, R.string.prefs_force_incognito_mode_summary)

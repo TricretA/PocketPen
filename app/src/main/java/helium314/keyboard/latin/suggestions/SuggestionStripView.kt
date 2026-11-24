@@ -79,6 +79,7 @@ class SuggestionStripView(context: Context, attrs: AttributeSet?, defStyle: Int)
         fun removeSuggestion(word: String?)
         fun removeExternalSuggestions()
         fun onSwipeDownOnToolbar()
+        fun onToolsPanelToggle()
     }
 
     private val moreSuggestionsContainer: View
@@ -118,6 +119,9 @@ class SuggestionStripView(context: Context, attrs: AttributeSet?, defStyle: Int)
     private val suggestionsStrip: ViewGroup = findViewById(R.id.suggestions_strip)
     private val toolbarExpandKey = findViewById<ImageButton>(R.id.suggestions_strip_toolbar_key)
     private val incognitoIcon = KeyboardIconsSet.instance.getNewDrawable(ToolbarKey.INCOGNITO.name, context)
+    private var toolsOpen = false
+    private val gridIcon = androidx.core.content.ContextCompat.getDrawable(context, R.drawable.ic_pp_grid)?.mutate()
+    private val closeIcon = androidx.core.content.ContextCompat.getDrawable(context, R.drawable.ic_pp_close)?.mutate()
     private val toolbarArrowIcon = KeyboardIconsSet.instance.getNewDrawable(KeyboardIconsSet.NAME_TOOLBAR_KEY, context)
     private val defaultToolbarBackground: Drawable = toolbarExpandKey.background
     private val enabledToolKeyBackground = GradientDrawable()
@@ -152,22 +156,7 @@ class SuggestionStripView(context: Context, attrs: AttributeSet?, defStyle: Int)
             setToolbarVisibility(true)
         }
 
-        // toolbar keys setup (no need to hide them any more when locked, because then suggestion strip is gone anyway
-        for (key in getEnabledToolbarKeys(context.prefs())) {
-            val button = createToolbarKey(context, key)
-            button.layoutParams = toolbarKeyLayoutParams
-            setupKey(button, colors)
-            toolbar.addView(button)
-        }
-        for (pinnedKey in getPinnedToolbarKeys(context.prefs())) {
-            val button = createToolbarKey(context, pinnedKey)
-            button.layoutParams = toolbarKeyLayoutParams
-            setupKey(button, colors)
-            pinnedKeys.addView(button)
-            val pinnedKeyInToolbar = toolbar.findViewWithTag<View>(pinnedKey)
-            if (pinnedKeyInToolbar != null && Settings.getValues().mQuickPinToolbarKeys)
-                pinnedKeyInToolbar.background = enabledToolKeyBackground
-        }
+        rebuildToolbarKeys()
         toolbarContainer.doOnNextLayout {
             // set min with of the toolbar so the weight of the toolbar keys actually does something
             // todo: results in requestLayout() improperly called by android.widget.LinearLayout during layout: running second layout pass
@@ -175,6 +164,48 @@ class SuggestionStripView(context: Context, attrs: AttributeSet?, defStyle: Int)
         }
 
         updateKeys()
+    }
+
+    fun rebuildToolbarKeys() {
+        val colors = Settings.getValues().mColors
+        toolbar.removeAllViews()
+        pinnedKeys.removeAllViews()
+        for (key in getEnabledToolbarKeys(context.prefs())) {
+            val button = createToolbarKey(context, key)
+            button.layoutParams = toolbarKeyLayoutParams
+            setupKey(button, colors)
+            toolbar.addView(button)
+        }
+        val size = (resources.getDimension(R.dimen.config_suggestions_strip_height) * 0.82f).toInt()
+        val circleColor = androidx.core.graphics.ColorUtils.blendARGB(
+            colors.get(ColorType.STRIP_BACKGROUND) or -0x1000000, colors.get(ColorType.TOOL_BAR_KEY) or -0x1000000, 0.16f
+        )
+        for (pinnedKey in getPinnedToolbarKeys(context.prefs())) {
+            val button = createToolbarKey(context, pinnedKey)
+            val params = LinearLayout.LayoutParams(size, size)
+            params.gravity = android.view.Gravity.CENTER_VERTICAL
+            params.marginStart = (4 * resources.displayMetrics.density).toInt()
+            params.marginEnd = (6 * resources.displayMetrics.density).toInt()
+            button.layoutParams = params
+            setupKey(button, colors)
+            (button.layoutParams as LinearLayout.LayoutParams).weight = 0f
+            button.background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(circleColor)
+            }
+            pinnedKeys.addView(button)
+        }
+        updateVoiceKey()
+    }
+
+    fun setToolsOpen(open: Boolean) {
+        toolsOpen = open
+        refreshExpandIcon()
+    }
+
+    private fun refreshExpandIcon() {
+        val incognito = Settings.getValues().mIncognitoModeEnabled
+        toolbarExpandKey.setImageDrawable(if (toolsOpen) closeIcon else if (incognito) incognitoIcon else gridIcon)
     }
 
     private lateinit var listener: Listener
@@ -219,14 +250,13 @@ class SuggestionStripView(context: Context, attrs: AttributeSet?, defStyle: Int)
         else {
             newLayoutDirection = if (isRtlLanguage) LAYOUT_DIRECTION_RTL else LAYOUT_DIRECTION_LTR
             direction = if (isRtlLanguage) -1 else 1
-            toolbarExpandKey.scaleX = (if (toolbarContainer.visibility != VISIBLE) 1f else -1f) * direction
         }
         layoutDirection = newLayoutDirection
         suggestionsStrip.layoutDirection = newLayoutDirection
     }
 
     fun setToolbarVisibility(toolbarVisible: Boolean) {
-        pinnedKeys.isVisible = !toolbarVisible
+        pinnedKeys.isVisible = true
         suggestionsStrip.isVisible = !toolbarVisible
         toolbarContainer.isVisible = toolbarVisible
 
@@ -236,7 +266,6 @@ class SuggestionStripView(context: Context, attrs: AttributeSet?, defStyle: Int)
             }
         }
 
-        toolbarExpandKey.scaleX = (if (toolbarVisible) -1f else 1f) * direction
     }
 
     fun setSuggestions(suggestions: SuggestedWords, isRtlLanguage: Boolean) {
@@ -334,7 +363,7 @@ class SuggestionStripView(context: Context, attrs: AttributeSet?, defStyle: Int)
         }
         AudioAndHapticFeedbackManager.getInstance().performHapticAndAudioFeedback(KeyCode.NOT_SPECIFIED, this, HapticEvent.KEY_PRESS)
         if (view === toolbarExpandKey) {
-            setToolbarVisibility(toolbarContainer.visibility != VISIBLE)
+            listener.onToolsPanelToggle()
         }
 
         // tag for word views is set in SuggestionStripLayoutHelper (setupWordViewsTextAndColor, layoutPunctuationSuggestions)
@@ -508,17 +537,10 @@ class SuggestionStripView(context: Context, attrs: AttributeSet?, defStyle: Int)
         updateVoiceKey()
         val settingsValues = Settings.getValues()
 
-        val toolbarIsExpandable = settingsValues.mToolbarMode == ToolbarMode.EXPANDABLE
-        if (settingsValues.mIncognitoModeEnabled) {
-            toolbarExpandKey.setImageDrawable(incognitoIcon)
-            toolbarExpandKey.isVisible = true
-        } else {
-            toolbarExpandKey.setImageDrawable(toolbarArrowIcon)
-            toolbarExpandKey.isVisible = toolbarIsExpandable
-        }
-
-        toolbarExpandKey.setOnClickListener(if (!toolbarIsExpandable) null else this)
-        pinnedKeys.visibility = suggestionsStrip.visibility
+        refreshExpandIcon()
+        toolbarExpandKey.isVisible = true
+        toolbarExpandKey.setOnClickListener(this)
+        pinnedKeys.visibility = VISIBLE
         isExternalSuggestionVisible = false
     }
 

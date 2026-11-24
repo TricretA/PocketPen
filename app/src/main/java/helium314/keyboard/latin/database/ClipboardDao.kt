@@ -35,6 +35,7 @@ class ClipboardDao private constructor(private val db: Database) {
         RECENT({ !it.isPinned && !it.isSnippet }),
         PINNED({ it.isPinned && !it.isSnippet }),
         SNIPPETS({ it.isSnippet }),
+        IMAGES({ it.filename != null }),
     }
 
     var tab = Tab.ALL
@@ -207,6 +208,27 @@ class ClipboardDao private constructor(private val db: Database) {
     fun addSnippet(text: String) {
         if (text.isBlank()) return
         insertNewEntry(System.currentTimeMillis(), true, text, null, null, null, true)
+    }
+
+    fun find(id: Long): ClipboardHistoryEntry? = synchronized(this) { cache.firstOrNull { it.id == id } }
+
+    fun latestImageEntry(): ClipboardHistoryEntry? = synchronized(this) {
+        cache.filter { it.filename != null }.maxByOrNull { it.timeStamp }
+    }
+
+    fun setPinned(id: Long, pinned: Boolean) = synchronized(this) {
+        val entry = cache.firstOrNull { it.id == id } ?: return@synchronized
+        entry.isPinned = pinned
+        if (!pinned) entry.isSnippet = false
+        entry.timeStamp = System.currentTimeMillis()
+        cache.sort()
+        refreshShown()
+        listener?.onClipsChanged()
+        val cv = ContentValues(3)
+        cv.put(COLUMN_PINNED, entry.isPinned)
+        cv.put(COLUMN_KIND, if (entry.isSnippet) KIND_SNIPPET else KIND_CLIP)
+        cv.put(COLUMN_TIMESTAMP, entry.timeStamp)
+        db.writableDatabase.update(TABLE, cv, "$COLUMN_ID = ${entry.id}", null)
     }
 
     fun sort() {

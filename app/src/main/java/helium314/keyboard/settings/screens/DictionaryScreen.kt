@@ -1,6 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package helium314.keyboard.settings.screens
 
+import helium314.keyboard.settings.ui.PocketScreen
+import helium314.keyboard.settings.ui.RowDivider
+import helium314.keyboard.settings.ui.SectionLabel
+import helium314.keyboard.settings.ui.SettingsCard
+import helium314.keyboard.settings.ui.SettingsRow
+
 import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.clickable
@@ -57,57 +63,36 @@ fun DictionaryScreen(
     val enabledLanguages = SubtypeSettings.getEnabledSubtypes(true).map { it.locale().language }
     val cachedDictFolders = DictionaryInfoUtils.getCacheDirectories(ctx).map { it.name }
     val comparer = compareBy<Locale>({ it.language !in enabledLanguages }, { it.toLanguageTag() !in cachedDictFolders }, { it.displayName })
-    val dictionaryLocales = listOf<Locale?>(null) + getDictionaryLocales(ctx).sortedWith(comparer)
+    val dictionaryLocales = remember { getDictionaryLocales(ctx).sortedWith(comparer) }
     var selectedLocale: Locale? by remember { mutableStateOf(null) }
     var showAddDictDialog by remember { mutableStateOf(false) }
     val dictPicker = dictionaryFilePicker(selectedLocale)
-    SearchScreen(
-        onClickBack = onClickBack,
-        title = { Text(stringResource(R.string.dictionary_settings_category)) },
-        filteredItems = { term ->
-            if (term.isBlank()) dictionaryLocales
-            else dictionaryLocales.filter { loc ->
-                    loc != null
-                    && loc.localizedDisplayName(ctx.resources).replace("(", "")
-                        .splitOnWhitespace().any { it.startsWith(term, true) }
-                }
-        },
-        itemContent = { locale ->
-            if (locale == null) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier
-                        .clickable { showAddDictDialog = true }
-                        .padding(vertical = 4.dp, horizontal = 16.dp)
-                        .fillMaxWidth()
-                ) {
-                    Text(
-                        stringResource(R.string.add_new_dictionary_title),
-                    )
-                    Icon(painterResource(R.drawable.ic_plus), stringResource(R.string.add_new_dictionary_title))
-                }
-            } else {
-                Column(
-                    Modifier
-                        .clickable { selectedLocale = locale }
-                        .padding(vertical = 6.dp, horizontal = 16.dp)
-                        .fillMaxWidth()
-                ) {
-                    val (dicts, hasInternal) = getUserAndInternalDictionaries(ctx, locale)
-                    val types = dicts.mapTo(mutableListOf()) { it.name.substringBefore("_${DictionaryInfoUtils.USER_DICTIONARY_SUFFIX}") }
-                    if (hasInternal && !types.contains(Dictionary.TYPE_MAIN))
-                        types.add(0, stringResource(R.string.internal_dictionary_summary))
-                    Text(locale.localizedDisplayName(LocalResources.current))
-                    Text(
-                        types.joinToString(", "),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+    PocketScreen(stringResource(R.string.pp_dictionaries), onClickBack) {
+        SettingsCard {
+            SettingsRow(
+                stringResource(R.string.sc_add_dictionary),
+                stringResource(R.string.sc_add_dictionary_sub),
+                R.drawable.ic_pp_add,
+                { showAddDictDialog = true }
+            ) {}
+        }
+        SectionLabel(stringResource(R.string.sc_dictionaries))
+        SettingsCard {
+            dictionaryLocales.forEachIndexed { index, locale ->
+                if (index > 0) RowDivider()
+                val (dicts, hasInternal) = getUserAndInternalDictionaries(ctx, locale)
+                val types = dicts.mapTo(mutableListOf()) { it.name.substringBefore("_${DictionaryInfoUtils.USER_DICTIONARY_SUFFIX}") }
+                if (hasInternal && !types.contains(Dictionary.TYPE_MAIN))
+                    types.add(0, stringResource(R.string.internal_dictionary_summary))
+                SettingsRow(
+                    locale.localizedDisplayName(LocalResources.current),
+                    types.joinToString(", ").ifBlank { null },
+                    R.drawable.ic_settings_languages,
+                    { selectedLocale = locale }
+                ) {}
             }
         }
-    )
+    }
     if (showAddDictDialog) {
         ConfirmationDialog(
             onDismissRequest = { showAddDictDialog = false },

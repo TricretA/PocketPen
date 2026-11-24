@@ -1,6 +1,21 @@
 // SPDX-License-Identifier: GPL-3.0-only
 package helium314.keyboard.settings.screens
 
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import helium314.keyboard.settings.ui.EmbeddedSetting
+import helium314.keyboard.settings.ui.PocketScreen
+import helium314.keyboard.settings.ui.RowDivider
+import helium314.keyboard.settings.ui.ScCollapsible
+import helium314.keyboard.settings.ui.SettingsCard
+import helium314.keyboard.settings.ui.SettingsRow
+
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
@@ -51,21 +66,71 @@ import java.util.Locale
 fun AboutScreen(
     onClickBack: () -> Unit,
 ) {
-    val items = listOf(
-        SettingsWithoutKey.APP,
-        SettingsWithoutKey.VERSION,
-        SettingsWithoutKey.LICENSE,
-        SettingsWithoutKey.HIDDEN_FEATURES,
-        SettingsWithoutKey.GITHUB_WIKI,
-        SettingsWithoutKey.COMMUNITY_LINKS,
-        SettingsWithoutKey.GITHUB,
-        SettingsWithoutKey.SAVE_LOG,
-    )
-    SearchSettingsScreen(
-        onClickBack = onClickBack,
-        title = stringResource(R.string.settings_screen_about),
-        settings = items
-    )
+    val ctx = LocalContext.current
+    fun openUrl(url: String) {
+        val intent = Intent(Intent.ACTION_VIEW, url.toUri()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        runCatching { ctx.startActivity(intent) }
+    }
+    PocketScreen(stringResource(R.string.pp_about), onClickBack) {
+        androidx.compose.foundation.layout.Column(
+            Modifier.fillMaxWidth().padding(vertical = 18.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            androidx.compose.foundation.Image(
+                painterResource(R.drawable.pp_logo_colour),
+                contentDescription = null,
+                modifier = Modifier.size(96.dp)
+            )
+            androidx.compose.foundation.layout.Spacer(Modifier.height(12.dp))
+            androidx.compose.material3.Text(
+                "Pocketpen",
+                style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
+                color = androidx.compose.material3.MaterialTheme.colorScheme.onBackground
+            )
+            androidx.compose.material3.Text(
+                stringResource(R.string.sc_about_tag),
+                style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            androidx.compose.material3.Text(
+                stringResource(R.string.sc_version, BuildConfig.VERSION_NAME),
+                style = androidx.compose.material3.MaterialTheme.typography.labelMedium,
+                color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        SettingsCard {
+            SettingsRow(
+                stringResource(R.string.sc_source),
+                stringResource(R.string.sc_source_sub),
+                R.drawable.ic_settings_about_github,
+                { openUrl("https://github.com/TricretA/TriKey") }
+            ) {}
+        }
+        ScCollapsible(stringResource(R.string.sc_licenses), stringResource(R.string.sc_licenses_sub), R.drawable.ic_settings_about_license) {
+            SettingsRow(
+                stringResource(R.string.sc_license_text),
+                null,
+                null,
+                { openUrl(Links.LICENSE) }
+            ) {}
+            RowDivider()
+            SettingsRow(
+                stringResource(R.string.sc_helium_source),
+                null,
+                null,
+                { openUrl(Links.GITHUB) }
+            ) {}
+            RowDivider()
+            SettingsRow(
+                stringResource(R.string.fn_licenses),
+                stringResource(R.string.fn_licenses_sub),
+                null,
+                { openUrl("https://openfontlicense.org") }
+            ) {}
+            EmbeddedSetting(SettingsWithoutKey.VERSION)
+            EmbeddedSetting(SettingsWithoutKey.SAVE_LOG)
+        }
+    }
 }
 
 fun createAboutSettings(context: Context) = listOf(

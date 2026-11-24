@@ -30,5 +30,6 @@ object AiPrompts {
         else -> action.instruction
     }
 
-    fun userMessage(instruction: String, text: String) = "Instruction: $instruction\n\nText:\n$text"
+    fun userMessage(instruction: String, text: String) =
+        if (text.isBlank()) "Instruction: $instruction" else "Instruction: $instruction\n\nText:\n$text"
 }

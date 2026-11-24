@@ -5,6 +5,7 @@ package helium314.keyboard.keyboard.clipboard
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
+import android.graphics.Color
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.View
@@ -12,7 +13,7 @@ import android.view.inputmethod.EditorInfo
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.recyclerview.widget.StaggeredGridLayoutManager
+import androidx.recyclerview.widget.GridLayoutManager
 import helium314.keyboard.event.HapticEvent
 import helium314.keyboard.keyboard.KeyboardActionListener
 import helium314.keyboard.keyboard.KeyboardElement
@@ -24,6 +25,7 @@ import helium314.keyboard.keyboard.PointerTracker
 import helium314.keyboard.keyboard.internal.KeyDrawParams
 import helium314.keyboard.keyboard.internal.KeyVisualAttributes
 import helium314.keyboard.keyboard.internal.keyboard_parser.floris.KeyCode
+import helium314.keyboard.clipboardplus.ScreenshotAccess
 import helium314.keyboard.latin.ClipboardHistoryManager
 import helium314.keyboard.latin.R
 import helium314.keyboard.latin.common.ColorType
@@ -56,6 +58,7 @@ class ClipboardHistoryView @JvmOverloads constructor(
     private lateinit var placeholderView: TextView
     private val toolbarKeys = mutableListOf<ImageButton>()
     private val tabViews = mutableMapOf<ClipboardDao.Tab, TextView>()
+    private lateinit var permissionChip: TextView
     private lateinit var clipboardAdapter: ClipboardAdapter
 
     lateinit var keyboardActionListener: KeyboardActionListener
@@ -92,8 +95,11 @@ class ClipboardHistoryView @JvmOverloads constructor(
         }
         placeholderView = findViewById(R.id.clipboard_empty_view)
         clipboardRecyclerView = findViewById<ClipboardHistoryRecyclerView>(R.id.clipboard_list).apply {
-            val colCount = resources.getInteger(R.integer.config_clipboard_keyboard_col_count)
-            layoutManager = StaggeredGridLayoutManager(colCount, StaggeredGridLayoutManager.VERTICAL)
+            layoutManager = GridLayoutManager(context, ClipboardAdapter.SPAN_COUNT).apply {
+                spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+                    override fun getSpanSize(position: Int) = clipboardAdapter.spanSize(position)
+                }
+            }
             @Suppress("deprecation") // "no cache" should be fine according to warning in https://developer.android.com/reference/android/view/ViewGroup#setPersistentDrawingCache(int)
             persistentDrawingCache = PERSISTENT_NO_CACHE
             clipboardLayoutParams.setListProperties(this)
@@ -102,14 +108,16 @@ class ClipboardHistoryView @JvmOverloads constructor(
         val tabs = findViewById<LinearLayout>(R.id.clipboard_tabs)
         listOf(
             ClipboardDao.Tab.ALL to R.string.clipboard_tab_all,
-            ClipboardDao.Tab.RECENT to R.string.clipboard_tab_recent,
-            ClipboardDao.Tab.PINNED to R.string.clipboard_tab_pinned,
-            ClipboardDao.Tab.SNIPPETS to R.string.clipboard_tab_snippets,
+            ClipboardDao.Tab.IMAGES to R.string.clipboard_tab_images,
         ).forEach { (tab, label) ->
             val tabView = TextView(context).apply {
                 setText(label)
                 gravity = android.view.Gravity.CENTER
-                layoutParams = LayoutParams(0, clipboardLayoutParams.tabRowHeight, 1f)
+                val horizontal = (14 * resources.displayMetrics.density).toInt()
+                setPadding(horizontal, 0, horizontal, 0)
+                layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, clipboardLayoutParams.tabRowHeight).apply {
+                    marginEnd = (6 * resources.displayMetrics.density).toInt()
+                }
                 setOnClickListener {
                     clipboardHistoryManager.clipboardTab = tab
                     updateTabs()
@@ -118,6 +126,15 @@ class ClipboardHistoryView @JvmOverloads constructor(
             tabViews[tab] = tabView
             tabs.addView(tabView)
         }
+        permissionChip = TextView(context).apply {
+            setText(R.string.clipboard_allow_screenshots)
+            gravity = android.view.Gravity.CENTER
+            val horizontal = (14 * resources.displayMetrics.density).toInt()
+            setPadding(horizontal, 0, horizontal, 0)
+            layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, clipboardLayoutParams.tabRowHeight)
+            setOnClickListener { ScreenshotAccess.requestPermission(context) }
+        }
+        tabs.addView(permissionChip)
         val clipboardStrip = KeyboardSwitcher.getInstance().clipboardStrip!!
         getEnabledClipboardToolbarKeys(context.prefs()).forEach {
             val key = createToolbarKey(context, it)
@@ -140,14 +157,28 @@ class ClipboardHistoryView @JvmOverloads constructor(
     }
 
     private fun updateTabs() {
+        val colors = Settings.getValues().mColors
         val selected = clipboardHistoryManager.clipboardTab
+        val radius = 18 * resources.displayMetrics.density
         tabViews.forEach { (tab, view) ->
-            view.alpha = if (tab == selected) 1f else 0.55f
-            view.setTypeface(view.typeface, if (tab == selected) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
+            val isSelected = tab == selected
+            view.alpha = if (isSelected) 1f else 0.6f
+            view.setTypeface(view.typeface, if (isSelected) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
+            view.background = if (isSelected) android.graphics.drawable.GradientDrawable().apply {
+                setColor(colors.get(ColorType.KEY_BACKGROUND))
+                cornerRadius = radius
+            } else null
+        }
+        permissionChip.visibility = if (ScreenshotAccess.hasPermission(context) && ScreenshotAccess.enabled(context)) GONE else VISIBLE
+        permissionChip.background = android.graphics.drawable.GradientDrawable().apply {
+            setColor(colors.get(ColorType.CLIPBOARD_PIN))
+            cornerRadius = radius
         }
     }
 
     private fun setupTabs(params: KeyDrawParams) {
+        permissionChip.setTextColor(Color.rgb(18, 20, 27))
+        permissionChip.setTextSize(TypedValue.COMPLEX_UNIT_PX, params.mLabelSize.toFloat() * 0.8f)
         tabViews.values.forEach {
             it.setTextColor(params.mTextColor)
             it.setTextSize(TypedValue.COMPLEX_UNIT_PX, params.mLabelSize.toFloat() * 0.8f)
@@ -265,22 +296,25 @@ class ClipboardHistoryView @JvmOverloads constructor(
     }
 
     override fun onClipInserted(position: Int) {
-        clipboardAdapter.notifyItemInserted(position)
-        clipboardRecyclerView.smoothScrollToPosition(position)
+        refreshList()
     }
 
     override fun onClipsRemoved(position: Int, count: Int) {
-        clipboardAdapter.notifyItemRangeRemoved(position, count)
+        refreshList()
     }
 
     override fun onClipsChanged() {
-        clipboardAdapter.notifyDataSetChanged()
+        refreshList()
     }
 
     override fun onClipMoved(oldPosition: Int, newPosition: Int) {
-        clipboardAdapter.notifyItemMoved(oldPosition, newPosition)
-        clipboardAdapter.notifyItemChanged(newPosition)
-        if (newPosition < oldPosition) clipboardRecyclerView.smoothScrollToPosition(newPosition)
+        refreshList()
+    }
+
+    private fun refreshList() {
+        post {
+            if (this::clipboardAdapter.isInitialized) clipboardAdapter.refresh()
+        }
     }
 
     override fun onSharedPreferenceChanged(prefs: SharedPreferences?, key: String?) {
@@ -291,7 +325,7 @@ class ClipboardHistoryView @JvmOverloads constructor(
             // Ensure settings are reloaded first
             Settings.getInstance().onSharedPreferenceChanged(prefs, key)
             clipboardHistoryManager.sortHistoryEntries()
-            clipboardAdapter.notifyDataSetChanged()
+            clipboardAdapter.refresh()
         }
     }
 }

@@ -26,6 +26,7 @@ import helium314.keyboard.latin.settings.SettingsValues;
 public final class AudioAndHapticFeedbackManager {
     private AudioManager mAudioManager;
     private Vibrator mVibrator;
+    private Context mContext;
 
     private SettingsValues mSettingsValues;
     private boolean mSoundOn;
@@ -47,6 +48,7 @@ public final class AudioAndHapticFeedbackManager {
     }
 
     private void initInternal(final Context context) {
+        mContext = context.getApplicationContext();
         mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
         mVibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
     }
@@ -87,6 +89,9 @@ public final class AudioAndHapticFeedbackManager {
             return;
         }
         if (hapticEvent != HapticEvent.KEY_PRESS) {
+            return;
+        }
+        if (KeySounds.INSTANCE.play(mContext, mSettingsValues.mKeypressSoundVolume)) {
             return;
         }
         final int sound = switch (code) {

@@ -39,6 +39,7 @@ import helium314.keyboard.settings.screens.PreferencesScreen
 import helium314.keyboard.settings.screens.SecondaryLayoutScreen
 import helium314.keyboard.settings.screens.SubtypeScreen
 import helium314.keyboard.settings.screens.TextCorrectionScreen
+import helium314.keyboard.settings.screens.ToolbarAdvancedScreen
 import helium314.keyboard.settings.screens.ToolbarScreen
 import helium314.keyboard.settings.screens.gesturedata.GestureDataScreen
 import helium314.keyboard.settings.screens.gesturedata.ReviewScreen
@@ -107,7 +108,10 @@ fun SettingsNavHost(
             PreferencesScreen(onClickBack = ::goBack)
         }
         composable(SettingsDestination.Toolbar) {
-            ToolbarScreen(onClickBack = ::goBack)
+            ToolbarScreen(onClickBack = ::goBack, onAdvanced = { navController.navigate(SettingsDestination.ToolbarAdvanced) })
+        }
+        composable(SettingsDestination.ToolbarAdvanced) {
+            ToolbarAdvancedScreen(onClickBack = ::goBack)
         }
         composable(SettingsDestination.GestureTyping) {
             GestureTypingScreen(onClickBack = ::goBack)
@@ -176,6 +180,7 @@ object SettingsDestination {
     const val TextCorrection = "text_correction"
     const val Preferences = "preferences"
     const val Toolbar = "toolbar"
+    const val ToolbarAdvanced = "toolbar_advanced"
     const val GestureTyping = "gesture_typing"
     const val DataGathering = "data_gathering" // remove when data gathering phase is done (end of 2026 latest)
     const val DataReview = "data_review" // remove when data gathering phase is done (end of 2026 latest)

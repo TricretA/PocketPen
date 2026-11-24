@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="fn_font">Font</string>
+    <string name="fn_default">Default</string>
+    <string name="fn_licenses">Fonts</string>
+    <string name="fn_licenses_sub">Poppins, Roboto Slab, Lora, Playfair Display, Oswald, Comfortaa, Space Mono, Caveat, Dancing Script, Pacifico, Lobster, Bangers, Press Start 2P — SIL Open Font License (Roboto Slab: Apache 2.0)</string>
+</resources>

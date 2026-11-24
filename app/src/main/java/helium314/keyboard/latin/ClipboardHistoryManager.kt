@@ -3,6 +3,15 @@
 package helium314.keyboard.latin
 
 import android.content.ClipData
+import android.graphics.BitmapFactory
+import android.os.Looper
+import androidx.core.view.inputmethod.EditorInfoCompat
+import androidx.core.view.inputmethod.InputConnectionCompat
+import helium314.keyboard.clipboardplus.ScreenshotAccess
+import helium314.keyboard.clipboardplus.ScreenshotWatcher
+import java.io.File
+import java.util.concurrent.Executors
+import android.os.Handler
 import android.content.ClipDescription
 import android.content.ClipboardManager
 import android.content.Context
@@ -46,6 +55,64 @@ class ClipboardHistoryManager(
     private var clipboardSuggestionView: View? = null
     private var clipboardDao: ClipboardDao? = null
     private var tempPrimaryClip = false
+    private var screenshotWatcher: ScreenshotWatcher? = null
+    private val ioExecutor = Executors.newSingleThreadExecutor()
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var pendingScreenshot: ClipboardHistoryEntry? = null
+    private var pendingScreenshotTime = 0L
+    private var dontShowScreenshot = false
+
+    fun ensureScreenshotWatcher() {
+        val active = ScreenshotAccess.active(latinIME)
+        if (active && screenshotWatcher == null) {
+            screenshotWatcher = ScreenshotWatcher(latinIME) { uri, mime -> onScreenshot(uri, mime) }.also { it.start() }
+        } else if (!active && screenshotWatcher != null) {
+            screenshotWatcher?.stop()
+            screenshotWatcher = null
+        }
+    }
+
+    private fun onScreenshot(uri: Uri, mime: String) {
+        ioExecutor.execute {
+            val dao = clipboardDao ?: return@execute
+            dao.addClipUri(System.currentTimeMillis(), false, uri, ClipDescription("Screenshot", arrayOf(mime)), latinIME)
+            val added = dao.latestImageEntry()
+            mainHandler.post {
+                if (added != null) {
+                    pendingScreenshot = added
+                    pendingScreenshotTime = System.currentTimeMillis()
+                    dontShowScreenshot = false
+                }
+                latinIME.setNeutralSuggestionStrip()
+                latinIME.mHandler.postResumeSuggestions(false)
+            }
+        }
+    }
+
+    fun findEntry(id: Long) = clipboardDao?.find(id)
+
+    fun removeById(id: Long) {
+        clipboardDao?.remove(id)
+    }
+
+    fun setPinned(id: Long, pinned: Boolean) {
+        clipboardDao?.setPinned(id, pinned)
+    }
+
+    fun pasteEntry(entry: ClipboardHistoryEntry) {
+        if (entry.filename == null) {
+            latinIME.onTextInput(entry.text)
+            return
+        }
+        val content = entry.getContentInfo(latinIME)
+        val editorInfo = latinIME.currentInputEditorInfo
+        val connection = latinIME.currentInputConnection
+        val mimeTypes = EditorInfoCompat.getContentMimeTypes(editorInfo)
+        if (connection != null && mimeTypes.any { content.description.hasMimeType(it) })
+            InputConnectionCompat.commitContent(connection, editorInfo, content, InputConnectionCompat.INPUT_CONTENT_GRANT_READ_URI_PERMISSION, null)
+        else
+            pasteWithoutChangingClips(content)
+    }
 
     fun onCreate() {
         clipboardManager = latinIME.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -53,10 +120,14 @@ class ClipboardHistoryManager(
         clipboardDao = ClipboardDao.getInstance(latinIME)
         if (latinIME.mSettings.current.mClipboardHistoryEnabled)
             fetchPrimaryClip()
+        ensureScreenshotWatcher()
     }
 
     fun onDestroy() {
         clipboardManager.removePrimaryClipChangedListener(this)
+        screenshotWatcher?.stop()
+        screenshotWatcher = null
+        ioExecutor.shutdown()
     }
 
     override fun onPrimaryClipChanged() {
@@ -163,7 +234,10 @@ class ClipboardHistoryManager(
 
     // We do not want to update history while user is visualizing it, so we check retention only
     // when history is about to be shown
-    fun prepareClipboardHistory() = clipboardDao?.clearOldClips(true)
+    fun prepareClipboardHistory() {
+        ensureScreenshotWatcher()
+        clipboardDao?.clearOldClips(true)
+    }
 
     fun getHistorySize() = clipboardDao?.count() ?: 0
 
@@ -184,6 +258,14 @@ class ClipboardHistoryManager(
         // maybe no need to create a new view
         // but a cache has to consider a few possible changes, so better don't implement without need
         clipboardSuggestionView = null
+        ensureScreenshotWatcher()
+        val screenshot = pendingScreenshot
+        if (screenshot != null && !dontShowScreenshot && parent != null
+            && System.currentTimeMillis() - pendingScreenshotTime < SCREENSHOT_SUGGESTION_MILLIS
+            && !InputTypeUtils.isNumberInputType(editorInfo?.inputType ?: InputType.TYPE_NULL)
+        ) {
+            buildScreenshotSuggestion(screenshot, parent)?.let { return it }
+        }
 
         // get the content, or return null
         if (!latinIME.mSettings.current.mSuggestClipboardContent) return null
@@ -256,6 +338,50 @@ class ClipboardHistoryManager(
         return clipboardSuggestionView
     }
 
+    private fun buildScreenshotSuggestion(entry: ClipboardHistoryEntry, parent: ViewGroup): View? {
+        val file = File(ClipboardDao.clipFilesDir, entry.filename ?: return null)
+        val options = BitmapFactory.Options()
+        options.inJustDecodeBounds = true
+        BitmapFactory.decodeFile(file.absolutePath, options)
+        options.inSampleSize = (options.outHeight / 160).coerceAtLeast(1)
+        options.inJustDecodeBounds = false
+        val thumbnail = BitmapFactory.decodeFile(file.absolutePath, options) ?: return null
+        val binding = ClipboardSuggestionBinding.inflate(LayoutInflater.from(latinIME), parent, false)
+        val textView = binding.clipboardSuggestionText
+        KeyboardTypeface.applyToTextView(textView)
+        textView.text = latinIME.getString(R.string.clipboard_screenshot)
+        val imageView = binding.clipboardSuggestionImage
+        imageView.isVisible = true
+        imageView.setImageBitmap(thumbnail)
+        val onClick = View.OnClickListener {
+            dontShowScreenshot = true
+            pasteEntry(entry)
+            AudioAndHapticFeedbackManager.getInstance().performHapticAndAudioFeedback(KeyCode.NOT_SPECIFIED, it, HapticEvent.KEY_PRESS)
+            binding.root.isGone = true
+        }
+        textView.setOnClickListener(onClick)
+        imageView.setOnClickListener(onClick)
+        val closeButton = binding.clipboardSuggestionClose
+        closeButton.setImageDrawable(KeyboardIconsSet.instance.getIconDrawable(ToolbarKey.CLOSE_HISTORY.name.lowercase()))
+        closeButton.scaleX = 0.8f
+        closeButton.scaleY = 0.8f
+        closeButton.setOnClickListener {
+            dontShowScreenshot = true
+            val root = clipboardSuggestionView
+            if (root != null && root.parent != null && !root.isGone) {
+                latinIME.setNeutralSuggestionStrip()
+                latinIME.mHandler.postResumeSuggestions(false)
+            }
+            root?.isGone = true
+        }
+        val colors = latinIME.mSettings.current.mColors
+        textView.setTextColor(colors.get(ColorType.KEY_TEXT))
+        colors.setColor(closeButton, ColorType.REMOVE_SUGGESTION_ICON)
+        colors.setBackground(binding.root, ColorType.CLIPBOARD_SUGGESTION_BACKGROUND)
+        clipboardSuggestionView = binding.root
+        return clipboardSuggestionView
+    }
+
     private fun removeClipboardSuggestion() {
         dontShowCurrentSuggestion = true
         val csv = clipboardSuggestionView ?: return
@@ -274,6 +400,7 @@ class ClipboardHistoryManager(
         private var dontShowCurrentSuggestion: Boolean = false
 
         const val RECENT_TIME_MILLIS = 3 * 60 * 1000L // 3 minutes (for clipboard suggestions)
+        const val SCREENSHOT_SUGGESTION_MILLIS = 60 * 1000L
 
         private fun maySaveFromUri(uri: Uri?, context: Context): Boolean {
             val maxSize = context.prefs().getInt(Settings.PREF_CLIPBOARD_FILES_SIZE_LIMIT, Defaults.PREF_CLIPBOARD_FILES_SIZE_LIMIT)

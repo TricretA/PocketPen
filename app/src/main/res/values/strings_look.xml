@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lk_themes">Themes</string>
+    <string name="lk_size">Size</string>
+    <string name="lk_height">Height</string>
+    <string name="lk_text">Text size</string>
+    <string name="lk_spacing">Key spacing</string>
+    <string name="lk_keys">Keys</string>
+    <string name="lk_numbers">Number row</string>
+    <string name="lk_numbers_sub">Numbers above the letters</string>
+    <string name="lk_fill">Key tiles</string>
+    <string name="lk_fill_sub">Give every key its own tile</string>
+    <string name="lk_outline">Outline</string>
+    <string name="lk_outline_color">Outline color</string>
+    <string name="lk_round">Roundness</string>
+    <string name="lk_depth">Depth</string>
+    <string name="lk_more">More</string>
+    <string name="lk_auto_dark">Dark at night</string>
+    <string name="lk_auto_dark_sub">Switch to Ink after dark</string>
+    <string name="lk_hints">Corner hints</string>
+    <string name="lk_hints_sub">Tiny symbols on the keys</string>
+    <string name="lk_bottom">Bottom space</string>
+    <string name="lk_auto">Auto</string>
+    <string name="lk_none">None</string>
+</resources>

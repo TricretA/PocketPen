@@ -41,7 +41,18 @@
     <string name="ai_action_translate">Translate</string>
     <string name="ai_action_reply">Reply</string>
     <string name="ai_action_ask">Ask AI</string>
-    <string name="ai_action_custom">Custom</string>
+    <string name="ai_action_custom">Tell AI</string>
     <string name="appearance_more_options">More appearance options</string>
     <string name="appearance_category_size">Size</string>
+    <string name="ai_empty_title">Select some text first</string>
+    <string name="ai_empty_hint">Then tap the AI key again, or tell AI what to write</string>
+    <string name="ai_thinking">Thinking…</string>
+    <string name="ai_copy">Copy</string>
+    <string name="ai_copied">Copied</string>
+    <string name="ai_insert">Insert</string>
+    <string name="ai_replace">Replace</string>
+    <string name="ai_try_another">Try another</string>
+    <string name="ai_prompt_title">Tell AI what to do</string>
+    <string name="ai_prompt_hint">For example: make it friendlier</string>
+    <string name="ai_prompt_go">Go</string>
 </resources>

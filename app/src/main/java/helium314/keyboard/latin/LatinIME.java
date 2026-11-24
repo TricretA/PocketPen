@@ -1049,6 +1049,11 @@ public class LatinIME extends InputMethodService implements
     }
 
     @Override
+    public void onToolsPanelToggle() {
+        helium314.keyboard.toolspanel.ToolsPanelController.toggle(this);
+    }
+
+    @Override
     public void onSwipeDownOnToolbar() {
         requestHideSelf(0);
     }
@@ -1225,7 +1230,7 @@ public class LatinIME extends InputMethodService implements
         if (isShowingOptionDialog()) return;
         final View keyboardView = mKeyboardSwitcher.getMainKeyboardView();
         if (keyboardView == null) return;
-        final AlertDialog dialog = AiPanelKt.createAiPanelDialog(this, keyboardView.getWindowToken());
+        final Dialog dialog = AiPanelKt.createAiPanelDialog(this, keyboardView.getWindowToken());
         if (dialog == null) return;
         mOptionsDialog = dialog;
         dialog.show();
