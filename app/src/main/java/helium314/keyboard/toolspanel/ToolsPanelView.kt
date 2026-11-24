@@ -100,6 +100,10 @@ class ToolsPanelView(context: Context, private val host: Host) : FrameLayout(con
         showNormal()
     }
 
+    fun setBottomReserve(px: Int) {
+        setPadding(0, 0, 0, px)
+    }
+
     private fun dp(value: Int) = (value * density).toInt()
 
     private fun round(color: Int, radius: Int, stroke: Int = 0, strokeColor: Int = 0) = GradientDrawable().apply {
@@ -257,7 +261,7 @@ class ToolsPanelView(context: Context, private val host: Host) : FrameLayout(con
                             is PanelItem.Special -> specialTile(item.special)
                         }
                         view.setOnClickListener { onItemClick(it, item) }
-                        cell.addView(view, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, dp(42), Gravity.CENTER_VERTICAL))
+                        cell.addView(view, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
                     }
                     row.addView(cell, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f))
                 }

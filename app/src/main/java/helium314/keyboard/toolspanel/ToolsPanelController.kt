@@ -2,6 +2,8 @@
 package helium314.keyboard.toolspanel
 
 import android.view.Gravity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import helium314.keyboard.keyboard.KeyboardSwitcher
@@ -53,6 +55,12 @@ object ToolsPanelController {
         return true
     }
 
+    private fun reserve(host: ViewGroup): Int {
+        val inset = ViewCompat.getRootWindowInsets(host)?.getInsets(WindowInsetsCompat.Type.navigationBars())?.bottom ?: 0
+        val minimum = (40 * host.resources.displayMetrics.density).toInt()
+        return if (inset > 0) inset else minimum
+    }
+
     private fun show(ime: LatinIME) {
         val switcher = KeyboardSwitcher.getInstance()
         val host = switcher.toolsHost ?: return
@@ -72,6 +80,7 @@ object ToolsPanelController {
                 val current = panel ?: return
                 val layoutParams = current.layoutParams as? FrameLayout.LayoutParams ?: return
                 if (place(layoutParams, host, editing)) current.layoutParams = layoutParams
+                current.setBottomReserve(reserve(host))
             }
 
             override fun onToolbarChanged() {
@@ -83,6 +92,7 @@ object ToolsPanelController {
             }
         })
         panel = view
+        view.setBottomReserve(reserve(host))
         host.addView(view, params)
         switcher.suggestionStrip?.setToolsOpen(true)
     }

@@ -64,6 +64,7 @@ fun PrefSwitch(
         checked = it
         prefs.edit { putBoolean(key, it) }
         onChanged(it)
+        helium314.keyboard.keyboard.KeyboardSwitcher.getInstance().setThemeNeedsReload()
     }
 }
 

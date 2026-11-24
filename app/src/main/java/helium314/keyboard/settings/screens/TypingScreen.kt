@@ -48,12 +48,14 @@ import helium314.keyboard.settings.ui.ValueRow
 
 @Composable
 private fun PrefSwitch(key: String, default: Boolean, title: Int, subtitle: Int, icon: Int, onChanged: () -> Unit = {}) {
+    val reload = { helium314.keyboard.keyboard.KeyboardSwitcher.getInstance().setThemeNeedsReload() }
     val prefs = LocalContext.current.prefs()
     var checked by remember(key) { mutableStateOf(prefs.getBoolean(key, default)) }
     SwitchRow(stringResource(title), stringResource(subtitle), icon, checked) {
         checked = it
         prefs.edit { putBoolean(key, it) }
         onChanged()
+        reload()
     }
 }
 
